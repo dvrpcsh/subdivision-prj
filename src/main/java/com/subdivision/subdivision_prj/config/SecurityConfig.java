@@ -1,5 +1,6 @@
 package com.subdivision.subdivision_prj.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -9,10 +10,14 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration // 이 클래스가 Spring의 설정 파일임을 나타냅니다.
 @EnableWebSecurity // Spring Security를 활성화합니다.
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     //@Bean 어노테이션을 통해 이 메서드가 반환하는 객체(PasswordEncoder)를 Spring 컨테이너에 등록합니다.
     //이렇게 등록된 객체는 다른 곳에서 주입받아 사용할 수 있습니다.
@@ -38,7 +43,9 @@ public class SecurityConfig {
                         .requestMatchers("/", "api/auth/**").permitAll()
                         // 그 외의 모든 요청은 반드시 인증(로그인)을 거쳐야만 접근할 수 있도록 설정합니다.
                         .anyRequest().authenticated()
-                );
+                )
+                //우리가 만든 JwtAuthenticationFilter를 UsernamePasswordAuthenticationFilter 앞에 추가
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
