@@ -2,6 +2,7 @@ package com.subdivision.subdivision_prj.controller;
 
 import com.subdivision.subdivision_prj.dto.SignUpRequestDto;
 import com.subdivision.subdivision_prj.service.AuthService;
+import com.subdivision.subdivision_prj.dto.LoginRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,5 +28,12 @@ public class AuthController {
 
         // 회원가입 성공 시, HTTP 상태 코드 200(OK)와 함께 성공 메시지를 담아 응답합니다.
         return ResponseEntity.ok("회원가입이 성공적으로 완료되었습니다.");
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody LoginRequestDto requestDto) {
+        String token = authService.login(requestDto);
+
+        return ResponseEntity.ok(token);
     }
 }

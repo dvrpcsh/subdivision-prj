@@ -3,6 +3,8 @@ package com.subdivision.subdivision_prj.service;
 import com.subdivision.subdivision_prj.domain.User;
 import com.subdivision.subdivision_prj.domain.UserRepository;
 import com.subdivision.subdivision_prj.dto.SignUpRequestDto;
+import com.subdivision.subdivision_prj.dto.LoginRequestDto;
+import com.subdivision.subdivision_prj.config.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ public class AuthService {
     //final 키워드를 사용하여 의존성을 주입받습니다. (생성자 주입 방식)
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
     // @Transactional: 이 메서드 내에서 일어나는 모든 DB 작업이 하나의 트랜잭션으로 묶입니다.
     // 성공적으로 끝나면 커밋(commit), 예외 발생 시 롤백(rollback) 처리합니다.
@@ -44,5 +47,24 @@ public class AuthService {
 
         // 5.저장된 사용자의 ID를 반환합니다.
         return savedUser.getId();
+    }
+
+    /**
+     * 로그인 메서드
+     * @param requestDto 로그인 요청 DTO
+     * @return 생성된 JWT
+     */
+    public String login(LoginRequestDto requestDto) {
+        //1.이메일로 사용자 조회
+        User user = userRepository.findByEmail(requestDto.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
+
+        //2.비밀번호 일치 여부 확인
+        if(!passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("잘못된 비밀번호입니다.");
+        }
+
+        //3.비밀번호가 일치하면 JWT생성하여 반환
+        return jwtTokenProvider.createToken(user.getEmail());
     }
 }
