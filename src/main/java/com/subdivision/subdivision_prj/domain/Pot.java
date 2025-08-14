@@ -48,4 +48,9 @@ public class Pot {
         this.maximumHeadcount = maximumHeadcount;
         this.currentHeadcount = 1; // 팟 생성 시, 작성자를 포함하여 현재 인원을 1로 초기화합니다.
     }
+
+    public void update(String title, String content) {
+        this.title = title;
+        this.content = content;
+    }
 }
