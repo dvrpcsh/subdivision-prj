@@ -7,6 +7,8 @@ import com.subdivision.subdivision_prj.domain.UserRepository;
 import com.subdivision.subdivision_prj.dto.PotCreateRequestDto;
 import com.subdivision.subdivision_prj.dto.PotResponseDto;
 import com.subdivision.subdivision_prj.dto.PotUpdateRequestDto;
+import com.subdivision.subdivision_prj.domain.PotMember;
+import com.subdivision.subdivision_prj.domain.PotMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ public class PotService {
 
     private final PotRepository potRepository;
     private final UserRepository userRepository;
+    private final PotMemberRepository potMemberRepository;
 
     /**
      * 새로운 팟(Pot)을 생성하는 메서드
@@ -122,4 +125,54 @@ public class PotService {
 
         return pot;
     }
+
+    /**
+     * 팟에 참여하는 메서드
+     */
+    @Transactional
+    public void joinPot(Long potId, UserDetails userDetails) {
+        User currentUser = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        Pot pot = potRepository.findById(potId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 ID의 팟을 찾을 수 없습니다."));
+
+        //이미 참여한 사용자인지 확인
+        potMemberRepository.findByPotAndUser(pot, currentUser).ifPresent(m -> {
+            throw new IllegalArgumentException("이미 참여한 팟입니다.");
+        });
+
+        //팟 인원 수 1증가(내부적으로 마감 여부 체크)
+        pot.addParticipant();
+
+        //PotMember에 참여 정보 저장
+        PotMember potMember = PotMember.builder()
+                .pot(pot)
+                .user(currentUser)
+                .build();
+        potMemberRepository.save(potMember);
+    }
+
+    /**
+     * 팟 참여를 취소하는 메서드
+     */
+    @Transactional
+    public void leavePot(Long potId, UserDetails userDetails) {
+        User currentUser = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        Pot pot = potRepository.findById(potId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 ID의 팟을 찾을 수 없습니다."));
+
+        //참여 정보를 찾음. 없으면 예외 발생
+        PotMember potMember = potMemberRepository.findByPotAndUser(pot, currentUser)
+                .orElseThrow(() -> new IllegalArgumentException("이 팟의 멤버가 아닙니다."));
+
+        //팟 인원 수 1감소(내부적으로 작성자인지 체크)
+        pot.removeParticipant();
+
+        //PotMember에서 참여 정보 삭제
+        potMemberRepository.delete(potMember);
+    }
+
 }

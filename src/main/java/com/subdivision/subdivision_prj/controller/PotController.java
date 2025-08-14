@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -90,6 +91,32 @@ public class PotController {
     ) {
         potService.deletePot(potId, userDetails);
         //성공적으로 삭제되었을 경우, 본문(body)없이 204 No Content 상태 코드를 반환하는 것이 표준적입니다.
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 특정 팟에 참여하는 API
+     */
+    @PostMapping("/{potId}/join")
+    public ResponseEntity<Void> joinPot(
+            @PathVariable Long potId,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        potService.joinPot(potId, userDetails);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 특정 팟에 참여를 취소하는 API
+     */
+    @DeleteMapping("/{potId}/leave")
+    public ResponseEntity<Void> leavePot(
+            @PathVariable Long potId,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        potService.leavePot(potId, userDetails);
+
         return ResponseEntity.noContent().build();
     }
 }

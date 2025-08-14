@@ -14,7 +14,7 @@ public class PotCreateRequestDto {
     private String title;
     private String content;
     private String productName;
-    private int maximumHeadCount;
+    private int maximumHeadcount;
 
     //DTO를 Entity로 변환하는 메서드
     //이 메서드를 통해 Service 계층에서 DTO를 영속성(JPA)이 관리하는 Entity로 쉽게 변환할 수 있습니다.
@@ -24,7 +24,7 @@ public class PotCreateRequestDto {
                 .title(title)
                 .content(content)
                 .productName(productName)
-                .maximumHeadcount(maximumHeadCount)
+                .maximumHeadcount(maximumHeadcount)
                 .build();
     }
 }
