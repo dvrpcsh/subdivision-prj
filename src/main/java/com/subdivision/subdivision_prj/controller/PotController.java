@@ -10,14 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -118,5 +112,28 @@ public class PotController {
         potService.leavePot(potId, userDetails);
 
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 위치 기반으로 주변의 Pot 목록을 조회하는 API 엔트포인트입니다.
+     * 클라이언트는 Query Parameter를 통해 현재 위치와 검색 반경을 전달합니다.
+     * 예시 호출: GET /api/v1/pots/nearby?lat=35.179554&lon=129.075642&dist=3
+     *
+     * @param lat 사용자의 현재 위도(latitude)
+     * @param lon 사용자의 현재 경도(longitude)
+     * @param dist 검색 반경(km) - 값이 없을 경우 기본값으로 1km를 사용합니다.
+     * @return 성공 응답(200 OK)와 함께 검색된 Pot 목록을 Body에 담아 반환합니다.
+     */
+    @GetMapping("/nearby")
+    public ResponseEntity<List<PotResponseDto>> getPotsByLocation(
+            @RequestParam("lat") Double lat,
+            @RequestParam("lon") Double lon,
+            @RequestParam(value = "dist", defaultValue = "1") Double dist) {
+
+        //1.PotService에 정의된 위치 기반 검색 메서드를 호출합니다.
+        List<PotResponseDto> pots = potService.findPotsByLocation(lon, lat, dist);
+
+        //2.서비스로부터 받은 DTO 리스트를 ResponseEntity에 담아 클라이언트에 반환합니다.
+        return ResponseEntity.ok(pots);
     }
 }

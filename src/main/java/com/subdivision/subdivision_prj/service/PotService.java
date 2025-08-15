@@ -175,4 +175,26 @@ public class PotService {
         potMemberRepository.delete(potMember);
     }
 
+    /**
+     * 위치 기반 검색 메서드
+     *
+     * 지정된 좌표를 중심으로 특정 반경 내의 모든 팟(Pot)을 검색합니다.
+     * 데이터베이스(PostGIS)의 공간 쿼리 성능을 활용하는 핵심 비즈니스 로직입니다.
+     *
+     * @param lon 검색 중심점의 경도(longitude)
+     * @param lat 검색 중심점의 위도(latitude)
+     * @param distance 검색 반경(단위:km)
+     * @return 검색 조건에 맞는 팟의 목록을 담은 DTO 리스트
+     */
+    @Transactional(readOnly = true)
+    public List<PotResponseDto> findPotsByLocation(Double lon, Double lat, Double distance) {
+        //PotRepository에 정의한 Native Query를 호출하여 엔티티 리스트를 조회합니다.
+        List<Pot> pots = potRepository.findPotsByLocation(lon, lat, distance);
+
+        //조회된 엔티티 리스트를 기존에 사용하던 PotResponseDto 리스트로 변환하여 반환합니다.
+        return pots.stream()
+                .map(PotResponseDto::new)
+                .collect(Collectors.toList());
+    }
+
 }

@@ -40,6 +40,12 @@ public class Pot {
     @Column(nullable = false)
     private int currentHeadcount; //현재 참여 인원
 
+    @Column(nullable = false)
+    private Double latitude; //게시물의 위치 정보(위도)
+
+    @Column(nullable = false)
+    private Double longitude; //게시물의 위치 정보(경도)
+
     //mappedBy는 PotMember 엔티티의 'pot' 필드를 가리킵니다.
     //이 팟에 속한 참여자 목록을 의미합니다.
     @OneToMany(mappedBy = "pot", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -47,12 +53,14 @@ public class Pot {
 
     //빌더 패턴을 사용하여 객체를 생성합니다.
     @Builder
-    public Pot(User user, String title, String content, String productName, int maximumHeadcount, int currentHeadcount) {
+    public Pot(User user, String title, String content, String productName, int maximumHeadcount, int currentHeadcount, Double latitude, Double longitude) {
         this.user = user;
         this.title = title;
         this.content = content;
         this.productName = productName;
         this.maximumHeadcount = maximumHeadcount;
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.currentHeadcount = 1; // 팟 생성 시, 작성자를 포함하여 현재 인원을 1로 초기화합니다.
     }
 
