@@ -33,4 +33,18 @@ public class MypageController {
 
         return ResponseEntity.ok(myPots);
     }
+
+    /**
+     * 현재 로그인 한 사용자가 참여한 모든 팟(Pot) 목록을 조회하는 API
+     * @param userDetails JWT 인증 필터를 통해 얻은 현재 사용자 정보
+     * @return 참여한 팟 목록과 HTTP 200 OK 상태 코드
+     */
+    @GetMapping("/joined-pots")
+    public ResponseEntity<List<PotResponseDto>> getJoinedPots(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        List<PotResponseDto> joinedPots = mypageService.getJoinedPots(userDetails);
+
+        return ResponseEntity.ok(joinedPots);
+    }
 }
