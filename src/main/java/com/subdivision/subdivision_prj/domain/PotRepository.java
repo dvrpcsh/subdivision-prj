@@ -35,4 +35,7 @@ public interface PotRepository extends JpaRepository<Pot, Long> {
             @Param("lon") Double lon,
             @Param("lat") Double lat,
             @Param("distance") Double distance);
+
+    //User 엔티티를 기준으로 모든 Pot을 조회하는 메서드
+    List<Pot> findAllByUser(User user);
 }
