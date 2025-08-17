@@ -2,6 +2,8 @@ package com.subdivision.subdivision_prj.dto;
 
 import com.subdivision.subdivision_prj.domain.Pot;
 import lombok.Getter;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 public class PotResponseDto {
@@ -13,6 +15,9 @@ public class PotResponseDto {
     private final int maximumHeadcount;
     private final int currentHeadcount;
     private final String authorNickname; //작성자의 전체 정보 대신 닉네임만 전달
+    private Double latitude;
+    private Double longitude;
+    private List<MemberInfo> members;
 
     // Pot 엔티티를 파라미터로 받아 DTO로 변환하는 생성자
     public PotResponseDto(Pot pot) {
@@ -23,5 +28,20 @@ public class PotResponseDto {
         this.maximumHeadcount = pot.getMaximumHeadcount();
         this.currentHeadcount = pot.getCurrentHeadcount();
         this.authorNickname = pot.getUser().getNickname(); // User 엔티티에서 닉네임 정보만 추출
+        this.latitude = pot.getLatitude();
+        this.longitude = pot.getLongitude();
+        this.members = pot.getMembers().stream()
+                .map(potMember -> new MemberInfo(potMember.getUser().getNickname()))
+                .collect(Collectors.toList());
+    }
+
+    //멤버 닉네임만 담는 간단한 내부 클래스
+    @Getter
+    private static class MemberInfo {
+        private String nickname;
+
+        public MemberInfo(String nickname) {
+            this.nickname = nickname;
+        }
     }
 }
