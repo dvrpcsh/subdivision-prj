@@ -18,6 +18,7 @@ public class PotResponseDto {
     private Double latitude;
     private Double longitude;
     private List<MemberInfo> members;
+    private String imageUrl;
 
     // Pot 엔티티를 파라미터로 받아 DTO로 변환하는 생성자
     public PotResponseDto(Pot pot) {
@@ -30,6 +31,7 @@ public class PotResponseDto {
         this.authorNickname = pot.getUser().getNickname(); // User 엔티티에서 닉네임 정보만 추출
         this.latitude = pot.getLatitude();
         this.longitude = pot.getLongitude();
+        this.imageUrl = pot.getImageUrl();
         this.members = pot.getMembers().stream()
                 .map(potMember -> new MemberInfo(potMember.getUser().getNickname()))
                 .collect(Collectors.toList());
@@ -43,5 +45,10 @@ public class PotResponseDto {
         public MemberInfo(String nickname) {
             this.nickname = nickname;
         }
+    }
+
+    //서비스 레이어에서 사전 서명된 URL을 설정하기 위한 Setter
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }

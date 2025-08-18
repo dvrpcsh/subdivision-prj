@@ -46,6 +46,11 @@ public class Pot {
     @Column(nullable = false)
     private Double longitude; //게시물의 위치 정보(경도)
 
+    //S3에 업로드 된 이미지의 URL을 저장할 필드
+    //이미지는 선택 사항일 수 있으므로 nullable = true로 설정합니다.
+    @Column(length = 512, nullable = true)
+    private String imageUrl;
+
     //mappedBy는 PotMember 엔티티의 'pot' 필드를 가리킵니다.
     //이 팟에 속한 참여자 목록을 의미합니다.
     @OneToMany(mappedBy = "pot", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -53,7 +58,7 @@ public class Pot {
 
     //빌더 패턴을 사용하여 객체를 생성합니다.
     @Builder
-    public Pot(User user, String title, String content, String productName, int maximumHeadcount, int currentHeadcount, Double latitude, Double longitude) {
+    public Pot(User user, String title, String content, String productName, int maximumHeadcount, int currentHeadcount, Double latitude, Double longitude, String imageUrl) {
         this.user = user;
         this.title = title;
         this.content = content;
@@ -61,6 +66,7 @@ public class Pot {
         this.maximumHeadcount = maximumHeadcount;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.imageUrl = imageUrl;
         this.currentHeadcount = 1; // 팟 생성 시, 작성자를 포함하여 현재 인원을 1로 초기화합니다.
     }
 

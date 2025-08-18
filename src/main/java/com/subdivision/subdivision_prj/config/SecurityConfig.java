@@ -56,6 +56,9 @@ public class SecurityConfig {
                         // "/" (메인 페이지), "/api/auth/**" (회원가입/로그인) 경로는 인증 없이 누구나 접근할 수 있도록 허용합니다.
                         .requestMatchers("/", "/api/auth/**").permitAll()
 
+                        //이미지 업로드 경로는 테스트를 위해 임시로 모두 허용
+                        .requestMatchers("/api/images/upload").authenticated()
+
                         // 그 외의 모든 요청은 반드시 인증(로그인)을 거쳐야만 접근할 수 있도록 설정합니다.
                         .anyRequest().authenticated()
                 )

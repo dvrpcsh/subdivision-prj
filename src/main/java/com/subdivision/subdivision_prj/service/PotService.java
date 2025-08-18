@@ -1,5 +1,8 @@
 package com.subdivision.subdivision_prj.service;
 
+import com.amazonaws.HttpMethod;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.subdivision.subdivision_prj.domain.Pot;
 import com.subdivision.subdivision_prj.domain.PotRepository;
 import com.subdivision.subdivision_prj.domain.User;
@@ -13,6 +16,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
+
+import java.net.URL;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,6 +30,10 @@ public class PotService {
     private final PotRepository potRepository;
     private final UserRepository userRepository;
     private final PotMemberRepository potMemberRepository;
+    private final AmazonS3 amazonS3Client;
+
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucket;
 
     /**
      * 새로운 팟(Pot)을 생성하는 메서드
@@ -43,8 +54,8 @@ public class PotService {
         //3.생성된 Pot 엔티티를 데이터베이스에 저장합니다.
         Pot savedPot = potRepository.save(newPot);
 
-        //4.저장된 Pot 엔티티를 PotResponseDto로 변환하여 반환합니다.
-        return new PotResponseDto(savedPot);
+        //4.DTO를 생성하고, 이미지 URL이 있다면 사전 서명된 URL을 생성하여 설정합니다.
+        return createPotResponseDtoWithPresignedUrl(savedPot);
     }
 
     /**
@@ -57,7 +68,8 @@ public class PotService {
         Pot pot = potRepository.findById(potId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 ID의 팟을 찾을 수 없습니다. ID=" + potId));
 
-        return new PotResponseDto(pot);
+        //DTO를 생성하고, 이미지 URL이 있다면 사전 서명된 URL을 생성하여 설정합니다.
+        return createPotResponseDtoWithPresignedUrl(savedPot);
     }
 
     /**
@@ -66,8 +78,10 @@ public class PotService {
      */
     @Transactional(readOnly = true)
     public List<PotResponseDto> getAllPots() {
+
+        //각 Pot에 대해 사전 서명된 URL을 생성하여 DTO 리스트를 만듭니다.
         return potRepository.findAll().stream()
-                .map(PotResponseDto::new) //pot -> new PotResponseDto(pot)와 동일
+                .map(this::createPotResponseDtoWithPresignedUrl)
                 .collect(Collectors.toList());
     }
 
@@ -82,14 +96,8 @@ public class PotService {
         //2.Pot 엔티티에 정의한 update 메서드를 사용하여 데이터 변경
         pot.update(requestDto.getTitle(), requestDto.getContent());
 
-        //3.변경된 팟 정보를 DTO로 변환하여 반환
-        //@Transactional에 의해 메서드가 끝나면 변경된 내용이 자동으로 DB에 반영됩니다.(Dirty Checking)
-        /*
-         * Dirty Checking: @Transactional이 적용된 메서드 안에서 JPA가 관리하는 엔티티의 상태가 변경되면,
-         * 이 메서드가 끝낼 때 JPA가 이 변경을 감지하여 자동으로 UPDATE 쿼리를 실행해줍니다.
-         * 따라서 potRepository.save()를 다시 호출할 필요가 없습니다.
-         */
-        return new PotResponseDto(pot);
+        //DTO를 생성하고, 이미지 URL이 있다면 사전 서명된 URL을 생성하여 설정합니다.
+        return createPotResponseDtoWithPresignedUrl(pot);
     }
 
     /**
@@ -191,10 +199,38 @@ public class PotService {
         //PotRepository에 정의한 Native Query를 호출하여 엔티티 리스트를 조회합니다.
         List<Pot> pots = potRepository.findPotsByLocation(lon, lat, distance);
 
-        //조회된 엔티티 리스트를 기존에 사용하던 PotResponseDto 리스트로 변환하여 반환합니다.
+        //각 Pot에 대해 사전 서명된 URL을 생성하여 DTO 리스트를 만듭니다.
         return pots.stream()
-                .map(PotResponseDto::new)
+                .map(this::createPotResponseDtoWithPresignedUrl)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Pot 엔티티를 받아 DTO를 생성하고, 이미지 URL이 존재하면 사전 서명된 URL을 생성하여 설정하는 헬퍼 메서드
+     */
+    private PotResponseDto createPotResponseDtoWithPresignedUrl(Pot pot) {
+        PotResponseDto responseDto = new PotResponseDto(pot);
+        if(pot.getImageUrl() != null && !pot.getImageUrl().isEmpty()) {
+            responseDto.setImageUrl(generatePresignedUrl(pot.getImageUrl()));
+        }
+
+        return responseDto;
+    }
+
+    /**
+     * 파일 키를 받아 사전 서명된 URL을 생성하는 헬퍼 메서드
+     */
+    private String generatePresignedUrl(String fileKey) {
+        Date expiration = new Date();
+        long expTimeMillis = expiration.getTime() + (60 * 60 * 1000); //유효기간 1시간
+        expiration.setTime(expTimeMillis);
+
+        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, fileKey)
+                .withMethod(HttpMethod.GET)
+                .withExpiration(expiration);
+
+        URL url = amazonS3Client.generatePresignedUrl(request);
+
+        return url.toString();
+    }
 }
