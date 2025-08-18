@@ -1,6 +1,7 @@
 package com.subdivision.subdivision_prj.dto;
 
 import com.subdivision.subdivision_prj.domain.Pot;
+import com.subdivision.subdivision_prj.domain.PotCategory;
 import com.subdivision.subdivision_prj.domain.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,6 +21,7 @@ public class PotCreateRequestDto {
     private Double latitude;
     private Double longitude;
     private String imageUrl;
+    private PotCategory category;
 
     //DTO를 Entity로 변환하는 메서드
     //이 메서드를 통해 Service 계층에서 DTO를 영속성(JPA)이 관리하는 Entity로 쉽게 변환할 수 있습니다.
@@ -33,6 +35,7 @@ public class PotCreateRequestDto {
                 .latitude(this.latitude)
                 .longitude(this.longitude)
                 .imageUrl(this.imageUrl)
+                .category(this.category)
                 .build();
     }
 }

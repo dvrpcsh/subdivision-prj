@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 @Entity
 @Getter
@@ -56,9 +58,19 @@ public class Pot {
     @OneToMany(mappedBy = "pot", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PotMember> members = new ArrayList<>();
 
+    //팟의 카테고리를 저장할 필드
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255) DEFAULT 'ETC'")
+    private PotCategory category;
+
+    //팟의 모집 상태를 저장할 필드
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255) DEFAULT 'RECRUITING'")
+    private PotStatus status;
+
     //빌더 패턴을 사용하여 객체를 생성합니다.
     @Builder
-    public Pot(User user, String title, String content, String productName, int maximumHeadcount, int currentHeadcount, Double latitude, Double longitude, String imageUrl) {
+    public Pot(User user, String title, String content, String productName, int maximumHeadcount, int currentHeadcount, Double latitude, Double longitude, String imageUrl, PotCategory category) {
         this.user = user;
         this.title = title;
         this.content = content;
@@ -67,6 +79,8 @@ public class Pot {
         this.latitude = latitude;
         this.longitude = longitude;
         this.imageUrl = imageUrl;
+        this.category = category;
+        this.status = PotStatus.RECRUITING; // 팟 생성 시, 기본 상태를 '모집중'으로 설정합니다.
         this.currentHeadcount = 1; // 팟 생성 시, 작성자를 포함하여 현재 인원을 1로 초기화합니다.
     }
 

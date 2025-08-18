@@ -4,7 +4,11 @@ import com.subdivision.subdivision_prj.dto.PotCreateRequestDto;
 import com.subdivision.subdivision_prj.dto.PotUpdateRequestDto;
 import com.subdivision.subdivision_prj.dto.PotResponseDto;
 import com.subdivision.subdivision_prj.service.PotService;
+import com.subdivision.subdivision_prj.domain.PotCategory;
+import com.subdivision.subdivision_prj.domain.PotStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -115,6 +119,7 @@ public class PotController {
     }
 
     /**
+     * 2025-08-18 메서드 삭제(아래 searchPots API로 통합)
      * 위치 기반으로 주변의 Pot 목록을 조회하는 API 엔트포인트입니다.
      * 클라이언트는 Query Parameter를 통해 현재 위치와 검색 반경을 전달합니다.
      * 예시 호출: GET /api/v1/pots/nearby?lat=35.179554&lon=129.075642&dist=3
@@ -123,7 +128,7 @@ public class PotController {
      * @param lon 사용자의 현재 경도(longitude)
      * @param dist 검색 반경(km) - 값이 없을 경우 기본값으로 1km를 사용합니다.
      * @return 성공 응답(200 OK)와 함께 검색된 Pot 목록을 Body에 담아 반환합니다.
-     */
+
     @GetMapping("/nearby")
     public ResponseEntity<List<PotResponseDto>> getPotsByLocation(
             @RequestParam("lat") Double lat,
@@ -134,6 +139,34 @@ public class PotController {
         List<PotResponseDto> pots = potService.findPotsByLocation(lon, lat, dist);
 
         //2.서비스로부터 받은 DTO 리스트를 ResponseEntity에 담아 클라이언트에 반환합니다.
+        return ResponseEntity.ok(pots);
+    }
+     */
+
+    /**
+     * 팟(Pot)을 복합 조건으로 검색하는 API
+     * 위치, 키워드, 카테고리, 상태 등 다양한 조건으로 필터링 및 검색하는 API
+     * @param lat 사용자 현재 위도 (필수)
+     * @param lon 사용자 현재 경도 (필수)
+     * @param distance 검색 반경(km) (선택, 기본값 10)
+     * @param keyword 검색 키워드 (선택)
+     * @param category 카테고리 필터 (선택)
+     * @param status 상태 필터 (선택, 기본값 RECRUITING)
+     * @param pageable 페이징 정보 (자동 주입)
+     * @return 검색 조건에 맞는 팟의 페이징된 목록
+     */
+    @GetMapping("/search")
+    public ResponseEntity<Page<PotResponseDto>> searchPots(
+        @RequestParam("lat") Double lat,
+        @RequestParam("lon") Double lon,
+        @RequestParam(value = "distance", defaultValue = "10") Double distance,
+        @RequestParam(value = "keyword", required = false) String keyword,
+        @RequestParam(value = "category", required = false) PotCategory category,
+        @RequestParam(value = "status", defaultValue = "RECRUITING") PotStatus status,
+        Pageable pageable
+    ) {
+        Page<PotResponseDto> pots = potService.searchPots(lat, lon, distance, keyword, category, status, pageable);
+
         return ResponseEntity.ok(pots);
     }
 }
