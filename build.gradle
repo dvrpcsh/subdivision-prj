@@ -29,6 +29,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
 	implementation 'org.hibernate.orm:hibernate-spatial'
 	implementation 'io.awspring.cloud:spring-cloud-starter-aws:2.4.4'

@@ -18,6 +18,25 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    /**
+     * 닉네임 중복 여부를 확인합니다.
+     * @param nickname 중복 확인할 닉네임
+     * @return 중복이면 true, 아니면 false
+     */
+    @Transactional(readOnly = true)
+    public boolean checkNicknameDuplicate(String nickname) {
+        return userRepository.existsByNickname(nickname);
+    }
+
+    /**
+     * 이메일 중복 여부를 확인합니다.
+     * @param email 중복 확인할 이메일
+     * @return 중복이면 true, 아니면 false
+     */
+    @Transactional(readOnly = true)
+    public boolean checkEmailDuplicate(String email) {
+        return userRepository.existsByEmail(email);
+    }
 
     // @Transactional: 이 메서드 내에서 일어나는 모든 DB 작업이 하나의 트랜잭션으로 묶입니다.
     // 성공적으로 끝나면 커밋(commit), 예외 발생 시 롤백(rollback) 처리합니다.

@@ -1,14 +1,14 @@
 package com.subdivision.subdivision_prj.controller;
 
+import com.amazonaws.Response;
 import com.subdivision.subdivision_prj.dto.SignUpRequestDto;
 import com.subdivision.subdivision_prj.service.AuthService;
 import com.subdivision.subdivision_prj.dto.LoginRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController //이 클래스가 Restful API의 컨트롤러임을 나타냅니다. @ResponseBody가 포함되어 있어 객체를 JSON으로 반환합니다.
 @RequestMapping("/api/auth") //이 컨트롤러의 모든 메서드 '/api/auth'라는 공통 경로를 가집니다.
@@ -35,5 +35,29 @@ public class AuthController {
         String token = authService.login(requestDto);
 
         return ResponseEntity.ok(token);
+    }
+
+    /**
+     * 닉네임 중복 체크 API
+     * @param nickname  중복 확인할 닉네임
+     * @return 중복 여부를 담은 응답
+     */
+    @GetMapping("/check-nickname")
+    public ResponseEntity<Map<String, Boolean>> checkNickname(@RequestParam String nickname) {
+        boolean isDuplicate = authService.checkNicknameDuplicate(nickname);
+
+        return ResponseEntity.ok(Map.of("isDuplicate", isDuplicate));
+    }
+
+    /**
+     * 이메일 중복 체크 API
+     * @param email 중복 확인할 이메일
+     * @return 중복 여부를 담은 응답
+     */
+    @GetMapping("/check-email")
+    public ResponseEntity<Map<String, Boolean>> checkEmail(@RequestParam String email) {
+        boolean isDuplicate = authService.checkEmailDuplicate(email);
+
+        return ResponseEntity.ok(Map.of("isDuplicate", isDuplicate));
     }
 }
