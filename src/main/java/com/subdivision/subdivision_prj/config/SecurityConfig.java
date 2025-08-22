@@ -1,5 +1,6 @@
 package com.subdivision.subdivision_prj.config;
 
+import com.subdivision.subdivision_prj.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +25,8 @@ import javax.swing.plaf.IconUIResource;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     //@Bean 어노테이션을 통해 이 메서드가 반환하는 객체(PasswordEncoder)를 Spring 컨테이너에 등록합니다.
     //이렇게 등록된 객체는 다른 곳에서 주입받아 사용할 수 있습니다.
@@ -63,7 +66,15 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 //우리가 만든 JwtAuthenticationFilter를 UsernamePasswordAuthenticationFilter 앞에 추가
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+
+                //OAuth2 로그인 설정
+                .oauth2Login(oauth2 -> oauth2
+                    .userInfoEndpoint(userInfo -> userInfo
+                        .userService(customOAuth2UserService) //사용자 정보를 처리할 서비스
+                    )
+                    .successHandler(oAuth2LoginSuccessHandler) //로그인 성공 후 처리할 핸들러
+        );
 
         return http.build();
     }
