@@ -4,7 +4,10 @@ import com.amazonaws.Response;
 import com.subdivision.subdivision_prj.dto.SignUpRequestDto;
 import com.subdivision.subdivision_prj.service.AuthService;
 import com.subdivision.subdivision_prj.dto.LoginRequestDto;
+import com.subdivision.subdivision_prj.dto.EmailRequestDto;
+import com.subdivision.subdivision_prj.dto.VerificationRequestDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -59,5 +62,31 @@ public class AuthController {
         boolean isDuplicate = authService.checkEmailDuplicate(email);
 
         return ResponseEntity.ok(Map.of("isDuplicate", isDuplicate));
+    }
+
+    /**
+     * 회원가입을 위한 이메일 인증 코드 발송 API
+     * @param requestDto 인증 코드를 받을 이메일 정보
+     * @return 성공 메시지
+     */
+    @PostMapping("/send-verification-code")
+    public ResponseEntity<String> sendVerificationCode(@RequestBody EmailRequestDto requestDto) {
+        authService.sendVerificationCode(requestDto.getEmail());
+
+        return ResponseEntity.ok("인증 코드가 성공적으로 발송되었습니다.");
+    }
+
+    /**
+     * 이메일 인증 코드를 검증하는 API
+     */
+    @PostMapping("/verify-code")
+    public ResponseEntity<String> verifyCode(@RequestBody VerificationRequestDto requestDto) {
+        boolean isVerified = authService.verifyCode(requestDto.getEmail(), requestDto.getCode());
+
+        if(isVerified) {
+            return ResponseEntity.ok("이메일 인증에 성공했습니다.");
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("인증 코드가 유효하지 않습니다.");
+        }
     }
 }
