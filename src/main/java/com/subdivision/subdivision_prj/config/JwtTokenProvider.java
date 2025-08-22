@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Date;
 
 @Component //Spring 컨테이너에 Bean으로 등록
@@ -41,17 +42,19 @@ public class JwtTokenProvider {
     }
 
     /**
-     * 사용자 이메일을 기반으로 JWT를 생성하는 메서드
+     * 사용자 이메일과 권한 정보를 기반으로 JWT를 생성하는 메서드
      * @param userEmail 사용자 이메일
      * @return 생성된 JWT 문자열
      */
     public String createToken(String userEmail) {
+
         Date now = new Date();
         Date validity = new Date(now.getTime() + expirationMs); // 만료 시간 설정
 
         // Jwts.builder()에 직접 subject를 설정하여 코드를 간소화
         return Jwts.builder()
-                .subject(userEmail) // Claims를 만드는 대신 바로 주체(subject)를 설정
+                .subject(userEmail) // 토큰의 주체(subject)로 이메일을 설정
+                .claim("roles", Collections.singletonList("ROLE_USER")) //'roles'정보를 claim으로 추가
                 .issuedAt(now)      // 토큰 발행 시간 설정
                 .expiration(validity) // 토큰 만료 시간 설정
                 .signWith(key, SignatureAlgorithm.HS256) // 사용할 암호화 알고리즘과 비밀키 설정

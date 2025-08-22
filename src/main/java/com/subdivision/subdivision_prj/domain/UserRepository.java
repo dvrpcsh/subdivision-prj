@@ -11,6 +11,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Optional<User>는 사용자가 존재할 수도, 존재하지 않을 수도 있는 경우 안전하게 처리하기 위해 사용합니다.
     Optional<User> findByEmail(String email);
 
+    //닉네임으로 사용자를 찾아오는 쿼리 메서드
+    Optional<User> findByNickname(String nickname);
+
     //닉네임으로 사용자가 존재하는지 확인하는 메서드
     boolean existsByNickname(String nickname);
 
