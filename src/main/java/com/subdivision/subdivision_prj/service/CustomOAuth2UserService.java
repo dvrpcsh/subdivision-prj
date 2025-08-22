@@ -21,10 +21,35 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
-        Map<String, Object> attributes = oAuth2User.getAttributes();
 
-        String email = (String)attributes.get("email");
-        String name = (String)attributes.get("name");
+        //어떤 SNS 제공자인지 확인합니다.
+        String provider = userRequest.getClientRegistration().getRegistrationId();
+
+        String email = null;
+        String name = null;
+
+        //제공자에 따라 데이터를 파싱하는 방식을 분기합니다.
+        if(provider.equals("google")) {
+            email = oAuth2User.getAttribute("email");
+            name = oAuth2User.getAttribute("name");
+        } else if(provider.equals("kakao")) {
+            //카카오 응답은 'kakao_account'안에, 그 안에 'profile'이 있는 중첩 구조입니다.
+            Map<String, Object> kakaoAccount = oAuth2User.getAttribute("kakao_account");
+            Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
+
+            //이메일은 사용자가 동의했을 경우에만 제공되므로, null일 수 있습니다.
+            if(kakaoAccount.containsKey("email")) {
+                email = (String)kakaoAccount.get("email");
+            }
+            //이름 대신 'nickname'을 사용합니다.
+            name = (String)profile.get("nickname");
+        }
+
+        //이메일이 없는 경우(카카오 비즈앱 미전환 등), 카카오의 고유 ID를 이용해 임시 이메일을 생성합니다.
+        if(email == null) {
+            //oAuth2User.getName()은 해당 SNS 고유 ID를 반환합니다.
+            email = oAuth2User.getName() + "@" + provider + ".com";
+        }
 
         Optional<User> userOptional = userRepository.findByEmail(email);
 
