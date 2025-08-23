@@ -1,8 +1,9 @@
 package com.subdivision.subdivision_prj.dto;
 
+import com.subdivision.subdivision_prj.domain.PotCategory;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Setter
@@ -10,4 +11,10 @@ import lombok.Setter;
 public class PotUpdateRequestDto {
     private String title;
     private String content;
+    private String productName;
+    private int maximumHeadcount;
+    private String imageUrl;
+    private Double latitude;
+    private Double longitude;
+    private PotCategory category;
 }

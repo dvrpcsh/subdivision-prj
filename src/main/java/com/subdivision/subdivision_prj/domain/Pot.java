@@ -1,5 +1,6 @@
 package com.subdivision.subdivision_prj.domain;
 
+import com.subdivision.subdivision_prj.dto.PotUpdateRequestDto;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -84,9 +85,15 @@ public class Pot {
         this.currentHeadcount = 1; // 팟 생성 시, 작성자를 포함하여 현재 인원을 1로 초기화합니다.
     }
 
-    public void update(String title, String content) {
-        this.title = title;
-        this.content = content;
+    public void update(PotUpdateRequestDto requestDto) {
+        this.title = requestDto.getTitle();
+        this.content = requestDto.getContent();
+        this.productName = requestDto.getProductName();
+        this.maximumHeadcount = requestDto.getMaximumHeadcount();
+        this.imageUrl = requestDto.getImageUrl();
+        this.latitude = requestDto.getLatitude();
+        this.longitude = requestDto.getLongitude();
+        this.category = requestDto.getCategory();
     }
 
     //현재 인원을 1 증가시키는 메서드

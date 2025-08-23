@@ -94,7 +94,7 @@ public class PotService {
         Pot pot = findPotAndCheckOwnership(potId, userDetails.getUsername());
 
         //2.Pot 엔티티에 정의한 update 메서드를 사용하여 데이터 변경
-        pot.update(requestDto.getTitle(), requestDto.getContent());
+        pot.update(requestDto);
 
         //DTO를 생성하고, 이미지 URL이 있다면 사전 서명된 URL을 생성하여 설정합니다.
         return createPotResponseDtoWithPresignedUrl(pot);
