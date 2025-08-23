@@ -1,14 +1,13 @@
 package com.subdivision.subdivision_prj.controller;
 
+import com.subdivision.subdivision_prj.dto.NicknameUpdateRequestDto;
 import com.subdivision.subdivision_prj.dto.PotResponseDto;
 import com.subdivision.subdivision_prj.service.MypageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -46,5 +45,18 @@ public class MypageController {
         List<PotResponseDto> joinedPots = mypageService.getJoinedPots(userDetails);
 
         return ResponseEntity.ok(joinedPots);
+    }
+
+    /**
+     * 사용자가 닉네임을 변경하는 API
+     */
+    @PatchMapping("/nickname")
+    public ResponseEntity<String> updateNickname(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody NicknameUpdateRequestDto requestDto
+    ) {
+        mypageService.updateNickname(userDetails, requestDto.getNickname());
+
+        return ResponseEntity.ok("닉네임이 성공적으로 변경되었습니다.");
     }
 }

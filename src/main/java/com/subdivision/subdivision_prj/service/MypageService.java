@@ -57,4 +57,22 @@ public class MypageService {
                 .map(potMember -> potService.createPotResponseDtoWithPresignedUrl(potMember.getPot()))
                 .collect(Collectors.toList());
     }
+
+    /**
+     * 사용자 닉네임을 변경하는 서비스 로직
+     */
+    public void updateNickname(UserDetails userDetails, String newNickname) {
+        // 1. 현재 사용자 정보를 가져옵니다.
+        User currentUser = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 2. 새로운 닉네임이 이미 존재하는지 확인합니다.
+        if (userRepository.existsByNickname(newNickname)) {
+            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+        }
+
+        // 3. 사용자 닉네임을 업데이트합니다.
+        currentUser.updateNickname(newNickname);
+        userRepository.save(currentUser); // @Transactional에 의해 자동 저장되지만, 명시적으로 호출
+    }
 }
