@@ -18,6 +18,7 @@ public class MypageService {
     private final UserRepository userRepository;
     private final PotRepository potRepository;
     private final PotMemberRepository potMemberRepository;
+    private final PotService potService;
 
     /**
      * 현재 로그인 한 사용자가 작성한 모든 팟 목록을 조회합니다.
@@ -34,7 +35,7 @@ public class MypageService {
 
         //조회된 Pot 엔티티 리스트를 PotResponseDto 리스트로 변환하여 반환합니다.
         return myPots.stream()
-                .map(PotResponseDto::new)
+                .map(potService::createPotResponseDtoWithPresignedUrl)
                 .collect(Collectors.toList());
     }
 
@@ -53,7 +54,7 @@ public class MypageService {
 
         //각 참여 기록(PotMember)에서 Pot 정보만 추출하여 DTO 리스트로 변환 후 반환합니다.
         return joinedMemberships.stream()
-                .map(potMember -> new PotResponseDto(potMember.getPot()))
+                .map(potMember -> potService.createPotResponseDtoWithPresignedUrl(potMember.getPot()))
                 .collect(Collectors.toList());
     }
 }

@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.redis.core.RedisTemplate;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -33,6 +35,9 @@ public class AuthServiceTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
     @Test
     @DisplayName("회원가입에 성공한다")
     void join_success() {
@@ -41,6 +46,11 @@ public class AuthServiceTest {
         requestDto.setEmail("test@example.com");
         requestDto.setPassword("password123");
         requestDto.setNickname("테스트유저");
+
+        //API흐름 1.'이메일 인증이 완료되었다'는 상태를 Redis에 미리 저장합니다.
+        //이 코드가 없으면 signup 서비스에서 예외가 발생하여 테스트가 실패합니다.
+        String email = requestDto.getEmail();
+        redisTemplate.opsForValue().set("VERIFIED_" + email, "true", 10, TimeUnit.MINUTES);
 
         //when - 테스트하려는 실제 로직 실행
         Long savedUserId = authService.signup(requestDto);

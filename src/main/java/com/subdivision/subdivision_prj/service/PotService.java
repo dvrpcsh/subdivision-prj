@@ -271,7 +271,7 @@ public class PotService {
     /**
      * Pot 엔티티를 받아 DTO를 생성하고, 이미지 URL이 존재하면 사전 서명된 URL을 생성하여 설정하는 헬퍼 메서드
      */
-    private PotResponseDto createPotResponseDtoWithPresignedUrl(Pot pot) {
+    public PotResponseDto createPotResponseDtoWithPresignedUrl(Pot pot) {
         PotResponseDto responseDto = new PotResponseDto(pot);
         if(pot.getImageUrl() != null && !pot.getImageUrl().isEmpty()) {
             responseDto.setImageUrl(generatePresignedUrl(pot.getImageUrl()));
