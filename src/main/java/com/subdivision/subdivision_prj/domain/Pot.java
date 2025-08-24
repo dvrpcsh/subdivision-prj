@@ -111,6 +111,11 @@ public class Pot {
         }
 
         this.currentHeadcount++;
+
+        //인원 수가 최대치에 도달하면 상태를 '모집완료'로 변경합니다.
+        if(this.currentHeadcount == this.maximumHeadcount) {
+            this.status = PotStatus.COMPLETED;
+        }
     }
 
     //현재 인원을 1 감소시키는 메서드
@@ -120,5 +125,10 @@ public class Pot {
             throw new IllegalArgumentException("작성자는 팟을 나갈 수 없습니다.");
         }
         this.currentHeadcount--;
+
+        //인원 수가 최대치 미만으로 떨어지면 상태를 다시 '모집중'으로 변경합니다.
+        if(this.currentHeadcount < this.maximumHeadcount) {
+            this.status = PotStatus.RECRUITING;
+        }
     }
 }

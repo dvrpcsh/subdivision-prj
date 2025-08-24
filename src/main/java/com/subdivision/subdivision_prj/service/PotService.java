@@ -64,12 +64,25 @@ public class PotService {
      * @return 조회된 팟의 정보를 담은 DTO
      */
     @Transactional(readOnly = true) //데이터를 변경하지 않은 조회 작업이므로 readOnly = true
-    public PotResponseDto getPotById(Long potId) {
+    public PotResponseDto getPotById(Long potId, UserDetails userDetails) {
         Pot pot = potRepository.findById(potId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 ID의 팟을 찾을 수 없습니다. ID=" + potId));
 
-        //DTO를 생성하고, 이미지 URL이 있다면 사전 서명된 URL을 생성하여 설정합니다.
-        return createPotResponseDtoWithPresignedUrl(pot);
+        PotResponseDto responseDto = createPotResponseDtoWithPresignedUrl(pot);
+
+        //현재 사용자의 참여 여부를 확인하고 DTO에 설정
+        if(userDetails != null) {
+            User currentUser = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+            boolean isJoined = pot.getMembers().stream()
+                    .anyMatch(member -> member.getUser().equals(currentUser));
+
+            responseDto.setCurrentUserJoined(isJoined);
+        }
+
+
+        return responseDto;
     }
 
     /**

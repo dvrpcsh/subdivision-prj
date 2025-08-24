@@ -21,6 +21,7 @@ public class PotResponseDto {
     private String imageUrl;
     private String address;
     private String detailAddress;
+    private boolean currentUserJoined; //현재 사용자가 이 팟에 참여했는지 여부
 
     // Pot 엔티티를 파라미터로 받아 DTO로 변환하는 생성자
     public PotResponseDto(Pot pot) {
@@ -54,5 +55,10 @@ public class PotResponseDto {
     //서비스 레이어에서 사전 서명된 URL을 설정하기 위한 Setter
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    //참여 여부를 설정하기 위한 setter
+    public void setCurrentUserJoined(boolean currentUserJoined) {
+        this.currentUserJoined = currentUserJoined;
     }
 }

@@ -48,8 +48,8 @@ public class PotController {
      * @return 조호된 팟의 정보와 HTTP 상태 코드 200(OK)
      */
     @GetMapping("/{potId}")
-    public ResponseEntity<PotResponseDto> getPotById(@PathVariable Long potId) {
-        PotResponseDto responseDto = potService.getPotById(potId);
+    public ResponseEntity<PotResponseDto> getPotById(@PathVariable Long potId, @AuthenticationPrincipal UserDetails userDetails) {
+        PotResponseDto responseDto = potService.getPotById(potId, userDetails);
 
         return ResponseEntity.ok(responseDto);
     }
@@ -162,7 +162,7 @@ public class PotController {
         @RequestParam(value = "distance", defaultValue = "10") Double distance,
         @RequestParam(value = "keyword", required = false) String keyword,
         @RequestParam(value = "category", required = false) PotCategory category,
-        @RequestParam(value = "status", defaultValue = "RECRUITING") PotStatus status,
+        @RequestParam(value = "status", required = false) PotStatus status,
         Pageable pageable
     ) {
         Page<PotResponseDto> pots = potService.searchPots(lat, lon, distance, keyword, category, status, pageable);
