@@ -61,6 +61,7 @@ public class MypageService {
     /**
      * 사용자 닉네임을 변경하는 서비스 로직
      */
+    @Transactional //수정 권한 추가
     public void updateNickname(UserDetails userDetails, String newNickname) {
         // 1. 현재 사용자 정보를 가져옵니다.
         User currentUser = userRepository.findByEmail(userDetails.getUsername())

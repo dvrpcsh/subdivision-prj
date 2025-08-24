@@ -183,7 +183,7 @@ public class PotService {
         potMemberRepository.delete(potMember);
     }
 
-    /**
+    /*
      * 2025-08-18 거리에 따른 동적 팟 검색 메서드로 대체
      * 위치 기반 검색 메서드
      *
