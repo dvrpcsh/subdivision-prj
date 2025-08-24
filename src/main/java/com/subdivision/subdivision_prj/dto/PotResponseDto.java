@@ -19,6 +19,8 @@ public class PotResponseDto {
     private Double longitude;
     private List<MemberInfo> members;
     private String imageUrl;
+    private String address;
+    private String detailAddress;
 
     // Pot 엔티티를 파라미터로 받아 DTO로 변환하는 생성자
     public PotResponseDto(Pot pot) {
@@ -35,6 +37,8 @@ public class PotResponseDto {
         this.members = pot.getMembers().stream()
                 .map(potMember -> new MemberInfo(potMember.getUser().getNickname()))
                 .collect(Collectors.toList());
+        this.address = pot.getAddress();
+        this.detailAddress = pot.getDetailAddress();
     }
 
     //멤버 닉네임만 담는 간단한 내부 클래스

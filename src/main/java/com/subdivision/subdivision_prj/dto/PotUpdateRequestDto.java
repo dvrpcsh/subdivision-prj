@@ -17,4 +17,6 @@ public class PotUpdateRequestDto {
     private Double latitude;
     private Double longitude;
     private PotCategory category;
+    private String address;
+    private String detailAddress;
 }
