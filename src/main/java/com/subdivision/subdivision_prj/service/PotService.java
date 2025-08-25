@@ -236,10 +236,10 @@ public class PotService {
     @Transactional(readOnly = true)
     public Page<PotResponseDto> searchPots(Double lat, Double lon, Double distance, String keyword,
                                            PotCategory category, PotStatus status, Pageable pageable) {
-        //1.기본 Specification을 생성합니다.
+        //기본 Specification을 생성합니다.
         Specification<Pot> spec = (root, query, criteriaBuilder) -> null;
 
-        //2.각 파라미터가 존재할 경우, 해당 조건의 Specification을 AND로 추가합니다.
+        //각 파라미터가 존재할 경우, 해당 조건의 Specification을 AND로 추가합니다.
         if(keyword != null && !keyword.trim().isEmpty()) {
             spec = spec.and(PotSpecification.likeKeyword(keyword));
         }
@@ -252,23 +252,26 @@ public class PotService {
             spec = spec.and(PotSpecification.equalStatus(status));
         }
 
-        //3.Specification으로 1차 필터링 된 결과 조회(페이징 적용)
-        Page<Pot> filteredPots = potRepository.findAll(spec, pageable);
+        //페이징 없이 모든 조건에 맞는 팟을 DB에서 조회합니다.
+        List<Pot> filteredPots = potRepository.findAll(spec);
 
-        //4.위치 기반 필터링은 Specification으로 처리하기 복잡하므로, 1차 결과 내에서 Java로 처리합니다.
-        //(데이터가 매우 많아지면 이 부분은 네이티브 쿼리 최적화가 필요할 수 있습니다.)
-        List<Pot> nearbyPots = filteredPots.getContent().stream()
+        //조회된 전체 목록을 대상으로 거리 필터링을 수행합니다.
+        List<Pot> nearbyPots = filteredPots.stream()
                 .filter(pot -> isWithinDistance(lat, lon, pot.getLatitude(), pot.getLongitude(), distance))
                 .toList();
 
-        //5.최종 결과를 DTO 페이지로 변환하여 반환합니다.
-        Page<PotResponseDto> dtoPage = new PageImpl<>(
-                nearbyPots.stream().map(this::createPotResponseDtoWithPresignedUrl).collect(Collectors.toList()),
+        //거리까지 필터링 된 최종 목록을 가지고 수동으로 페이징 처리를 합니다.
+        int start = (int)pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), nearbyPots.size());
+        List<Pot> pageContent = nearbyPots.subList(start, end);
+
+        //최종 결과로 DTO 페이지를 생성합니다.
+        //이 때 전체 개수는 nearbyPots.size()를 사용하므로 정확한 페이지 수가 계산됩니다.
+        return new PageImpl<>(
+                pageContent.stream().map(this::createPotResponseDtoWithPresignedUrl).collect(Collectors.toList()),
                 pageable,
                 nearbyPots.size()
         );
-
-        return dtoPage;
     }
 
     /**
