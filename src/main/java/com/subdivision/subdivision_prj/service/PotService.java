@@ -36,6 +36,16 @@ public class PotService {
     private String bucket;
 
     /**
+     * 인증 없이 전체 팟 목록을 페이징하여 조회
+     */
+    @Transactional(readOnly = true)
+    public Page<PotResponseDto> getAllPotsPublic(Pageable pageable) {
+        Page<Pot> pots = potRepository.findAll(pageable);
+
+        return pots.map(this::createPotResponseDtoWithPresignedUrl);
+    }
+
+    /**
      * 새로운 팟(Pot)을 생성하는 메서드
      * @param requestDto 팟 생성 요청 데이터
      * @param userDetails 현재 인증된 사용자의 정보

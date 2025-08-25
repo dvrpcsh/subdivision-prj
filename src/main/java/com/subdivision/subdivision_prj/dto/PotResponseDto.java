@@ -1,6 +1,7 @@
 package com.subdivision.subdivision_prj.dto;
 
 import com.subdivision.subdivision_prj.domain.Pot;
+import com.subdivision.subdivision_prj.domain.PotCategory;
 import lombok.Getter;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,6 +23,7 @@ public class PotResponseDto {
     private String address;
     private String detailAddress;
     private boolean currentUserJoined; //현재 사용자가 이 팟에 참여했는지 여부
+    private PotCategory category;
 
     // Pot 엔티티를 파라미터로 받아 DTO로 변환하는 생성자
     public PotResponseDto(Pot pot) {
@@ -40,6 +42,7 @@ public class PotResponseDto {
                 .collect(Collectors.toList());
         this.address = pot.getAddress();
         this.detailAddress = pot.getDetailAddress();
+        this.category = pot.getCategory();
     }
 
     //멤버 닉네임만 담는 간단한 내부 클래스

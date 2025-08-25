@@ -26,6 +26,18 @@ public class PotController {
     private final PotService potService;
 
     /**
+     * 인증이 필요 없는 전체 팟 목록 조회 API
+     * @param pageable 페이징 정보
+     * @return 페이징 된 전체 팟 목록
+     */
+    @GetMapping("/public")
+    public ResponseEntity<Page<PotResponseDto>> getAllPotsPublic(Pageable pageable) {
+        Page<PotResponseDto> pots = potService.getAllPotsPublic(pageable);
+
+        return ResponseEntity.ok(pots);
+    }
+
+    /**
      * 새로운 팟(Pot)을 생성하는 API
      * @param requestDto 팟 생성에 필요한 데이터
      * @param userDetails JWT 필터를 통해 인증된 사용자의 정보

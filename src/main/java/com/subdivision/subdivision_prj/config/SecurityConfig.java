@@ -59,6 +59,9 @@ public class SecurityConfig {
                         // "/" (메인 페이지), "/api/auth/**" (회원가입/로그인) 경로는 인증 없이 누구나 접근할 수 있도록 허용합니다.
                         .requestMatchers("/", "/api/auth/**").permitAll()
 
+                        // GET 요청에 대해 모두 허용
+                        .requestMatchers(HttpMethod.GET, "/api/pots/public", "/api/pots/search").permitAll()
+
                         //이미지 업로드 경로는 테스트를 위해 임시로 모두 허용
                         .requestMatchers("/api/images/upload").authenticated()
 
