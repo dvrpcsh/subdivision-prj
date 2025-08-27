@@ -12,6 +12,7 @@ public class PotUpdateRequestDto {
     private String title;
     private String content;
     private String productName;
+    private Integer price;
     private int maximumHeadcount;
     private String imageUrl;
     private Double latitude;

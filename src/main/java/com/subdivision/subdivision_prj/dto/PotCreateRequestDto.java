@@ -17,6 +17,7 @@ public class PotCreateRequestDto {
     private String title;
     private String content;
     private String productName;
+    private Integer price;
     private int maximumHeadcount;
     private Double latitude;
     private Double longitude;
@@ -33,6 +34,7 @@ public class PotCreateRequestDto {
                 .title(title)
                 .content(content)
                 .productName(productName)
+                .price(this.price)
                 .maximumHeadcount(maximumHeadcount)
                 .latitude(this.latitude)
                 .longitude(this.longitude)

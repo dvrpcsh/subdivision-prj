@@ -73,13 +73,18 @@ public class Pot {
     @Column(nullable = false, columnDefinition = "VARCHAR(255) DEFAULT 'RECRUITING'")
     private PotStatus status;
 
+    //가격 정보
+    @Column(nullable = false)
+    private Integer price;
+
     //빌더 패턴을 사용하여 객체를 생성합니다.
     @Builder
-    public Pot(User user, String title, String content, String productName, int maximumHeadcount, int currentHeadcount, Double latitude, Double longitude, String imageUrl, PotCategory category, String address, String detailAddress) {
+    public Pot(User user, String title, String content, Integer price, String productName, int maximumHeadcount, int currentHeadcount, Double latitude, Double longitude, String imageUrl, PotCategory category, String address, String detailAddress) {
         this.user = user;
         this.title = title;
         this.content = content;
         this.productName = productName;
+        this.price = price;
         this.maximumHeadcount = maximumHeadcount;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -95,6 +100,7 @@ public class Pot {
         this.title = requestDto.getTitle();
         this.content = requestDto.getContent();
         this.productName = requestDto.getProductName();
+        this.price = requestDto.getPrice();
         this.maximumHeadcount = requestDto.getMaximumHeadcount();
         this.imageUrl = requestDto.getImageUrl();
         this.latitude = requestDto.getLatitude();

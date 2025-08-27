@@ -13,6 +13,7 @@ public class PotResponseDto {
     private final String title;
     private final String content;
     private final String productName;
+    private final Integer price;
     private final int maximumHeadcount;
     private final int currentHeadcount;
     private final String authorNickname; //작성자의 전체 정보 대신 닉네임만 전달
@@ -31,6 +32,7 @@ public class PotResponseDto {
         this.title = pot.getTitle();
         this.content = pot.getContent();
         this.productName = pot.getProductName();
+        this.price = pot.getPrice();
         this.maximumHeadcount = pot.getMaximumHeadcount();
         this.currentHeadcount = pot.getCurrentHeadcount();
         this.authorNickname = pot.getUser().getNickname(); // User 엔티티에서 닉네임 정보만 추출
