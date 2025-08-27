@@ -1,11 +1,19 @@
 package com.subdivision.subdivision_prj.controller;
 
+import com.amazonaws.Response;
+import com.subdivision.subdivision_prj.dto.ChatHistoryResponseDto;
 import com.subdivision.subdivision_prj.dto.ChatMessageDto;
 import com.subdivision.subdivision_prj.service.ChatService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @Controller
@@ -31,10 +39,23 @@ public class ChatController {
         if(ChatMessageDto.MessageType.ENTER.equals(message.getType())) {
             //입장했다는 알림 메시지를 생성합니다.
             message.setMessage(message.getSender() + "님이 입장하셨습니다.");
-
-            //메시지를 해당 팟(채팅방)을 구독하고 있는 모든 클라이언트에게 전송(브로드캐스팅)합니다.
-            //클라이언트는 "/topic/pots/{potId}" 경로를 구독하고 있어야 이 메시지를 받을 수 있습니다.
-            messagingTemplate.convertAndSend("/topic/pots/" + message.getPotId(), message);
         }
+
+        //메시지를 해당 팟(채팅방)을 구독하고 있는 모든 클라이언트에게 전송(브로드캐스팅)합니다.
+        //클라이언트는 "/topic/pots/{potId}" 경로를 구독하고 있어야 이 메시지를 받을 수 있습니다.
+        messagingTemplate.convertAndSend("/topic/pots/" + message.getPotId(), message);
+    }
+
+    /**
+     * 특정 팟의 이전 대화 기록을 조회하는 HTTP GET API 엔드포인트입니다.
+     * @param potId 조회할 팟의 ID
+     * @return 대화 기록 DTO 리스트
+     */
+    @GetMapping("/api/pots/{potId}/chat/history")
+    @ResponseBody //이 메서드의 반환값이 HTTP 응답 본문(body)에 직접 쓰여지도록 합니다.
+    public ResponseEntity<List<ChatHistoryResponseDto>> getChatHistory(@PathVariable Long potId) {
+        List<ChatHistoryResponseDto> chatHistory = chatService.getChatHistory(potId);
+
+        return ResponseEntity.ok(chatHistory);
     }
 }

@@ -3,12 +3,15 @@ package com.subdivision.subdivision_prj.service;
 import com.subdivision.subdivision_prj.domain.*;
 import com.subdivision.subdivision_prj.domain.ChatMessageRepository;
 import com.subdivision.subdivision_prj.dto.ChatMessageDto;
+import com.subdivision.subdivision_prj.dto.ChatHistoryResponseDto;
 import com.subdivision.subdivision_prj.domain.ChatMessageRepository;
 import com.subdivision.subdivision_prj.domain.PotRepository;
 import com.subdivision.subdivision_prj.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 채팅 관련 비즈니스 로직을 처리하는 서비스 클래스입니다.
@@ -43,5 +46,21 @@ public class ChatService {
 
         //4.생성된 ChatMessage 엔티티를 데이터베이스에 저장합니다.
         chatMessageRepository.save(chatMessage);
+    }
+
+    /**
+     * 특정 팟의 이전 대화 기록을 조회하는 메서드입니다.
+     * @param potId 조회할 팟의 ID
+     * @return 대화 기록 DTO 리스트
+     */
+    @Transactional(readOnly = true)
+    public List<ChatHistoryResponseDto> getChatHistory(Long potId) {
+        //1.레파지토리를 사용하여 특정 팟의 모든 메시지를 시간 순으로 가져옵니다.
+        List<ChatMessage> messages = chatMessageRepository.findAllByPotIdOrderBySentAtAsc(potId);
+
+        //2.가져온 ChatMessage 엔티티 리스트를 ChatHistoryResponseDto 리스트로 변환하여 반환합니다.
+        return messages.stream()
+                .map(ChatHistoryResponseDto::new)
+                .collect(Collectors.toList());
     }
 }
