@@ -11,4 +11,8 @@ public interface PotMemberRepository extends JpaRepository <PotMember, Long> {
 
     //User 엔티티를 기준으로 모든 참여 정보를 조회하는 메서드
     List<PotMember> findAllByUser(User user);
+
+    //특정 팟(Pot)과 사용자(User)에 해당하는 PotMember 엔티티의 개수를 반환합니다.
+    long countByPotAndUser(Pot pot, User user);
+
 }

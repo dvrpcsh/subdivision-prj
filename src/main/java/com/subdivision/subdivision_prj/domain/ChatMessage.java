@@ -5,7 +5,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.locationtech.jts.operation.linemerge.LineMergeGraph;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
@@ -40,7 +39,7 @@ public class ChatMessage {
 
     @CreatedDate //엔티티가 생성될 때의 시간을 자동으로 저장
     @Column(updatable = false, nullable = false)
-    private LocalDateTime sendAt;
+    private LocalDateTime sentAt;
 
     @Builder
     public ChatMessage(Pot pot, User sender, String message) {

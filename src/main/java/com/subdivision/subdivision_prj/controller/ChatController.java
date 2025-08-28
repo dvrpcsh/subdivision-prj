@@ -1,8 +1,7 @@
 package com.subdivision.subdivision_prj.controller;
 
-import com.amazonaws.Response;
-import com.subdivision.subdivision_prj.dto.ChatHistoryResponseDto;
 import com.subdivision.subdivision_prj.dto.ChatMessageDto;
+import com.subdivision.subdivision_prj.dto.ChatHistoryResponseDto;
 import com.subdivision.subdivision_prj.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -30,20 +30,30 @@ public class ChatController {
      */
     @MessageMapping("/chat/message")
     public void message(ChatMessageDto message) {
-        // 메시지 타입이 'TALK'(일반 대화)일 경우에만 데이터베이스에 저장합니다.
-        if (ChatMessageDto.MessageType.TALK.equals(message.getType())) {
-            chatService.saveMessage(message);
-        }
+        // 메시지 타입이 'ENTER'(입장)일 경우
+        if (ChatMessageDto.MessageType.ENTER.equals(message.getType())) {
+            // 서비스를 호출하여 메시지를 저장하고, 최초 참여자인지 확인합니다.
+            boolean isFirstJoin = chatService.saveMessageAndCheckFirstJoin(message);
 
-        //사용자가 채팅방에 처음 입장했을 때의 처리
-        if(ChatMessageDto.MessageType.ENTER.equals(message.getType())) {
-            //입장했다는 알림 메시지를 생성합니다.
-            message.setMessage(message.getSender() + "님이 입장하셨습니다.");
-        }
+            // 최초 참여자일 경우에만 입장 알림 메시지를 전송합니다.
+            if(isFirstJoin) {
+                // 새로운 메시지 객체를 생성하여 환영 메시지를 담습니다.
+                ChatMessageDto welcomeMessage = new ChatMessageDto();
+                welcomeMessage.setType(ChatMessageDto.MessageType.ENTER);
+                welcomeMessage.setPotId(message.getPotId());
+                welcomeMessage.setSender(message.getSender());
+                welcomeMessage.setMessage(message.getSender() + "님이 팟에 처음으로 참여했습니다!");
 
-        //메시지를 해당 팟(채팅방)을 구독하고 있는 모든 클라이언트에게 전송(브로드캐스팅)합니다.
-        //클라이언트는 "/topic/pots/{potId}" 경로를 구독하고 있어야 이 메시지를 받을 수 있습니다.
-        messagingTemplate.convertAndSend("/topic/pots/" + message.getPotId(), message);
+                // 환영 메시지를 모든 구독자에게 브로드캐스트
+                messagingTemplate.convertAndSend("/topic/pots/" + message.getPotId(), welcomeMessage);
+            }
+        }
+        // 'TALK' 타입의 메시지 처리
+        else if (ChatMessageDto.MessageType.TALK.equals(message.getType())) {
+            // 채팅 메시지를 저장하고 모든 구독자에게 브로드캐스트
+            chatService.saveMessageAndCheckFirstJoin(message);
+            messagingTemplate.convertAndSend("/topic/pots/" + message.getPotId(), message);
+        }
     }
 
     /**

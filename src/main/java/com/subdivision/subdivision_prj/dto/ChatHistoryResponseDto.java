@@ -13,6 +13,6 @@ public class ChatHistoryResponseDto {
     public ChatHistoryResponseDto(ChatMessage chatMessage) {
         this.sender = chatMessage.getSender().getNickname();
         this.message = chatMessage.getMessage();
-        this.sendAt = chatMessage.getSendAt();
+        this.sendAt = chatMessage.getSentAt();
     }
 }

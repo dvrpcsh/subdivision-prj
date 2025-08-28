@@ -17,4 +17,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
      * @return ChatMessage 엔티티 리스트
      */
     List<ChatMessage> findAllByPotIdOrderBySentAtAsc(Long potId);
+
+    //최초 참여자인지 확인하는 메서드
+    boolean existsByPotAndSender(Pot pot, User sender);
 }

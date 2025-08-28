@@ -62,6 +62,9 @@ public class SecurityConfig {
                         // GET 요청에 대해 모두 허용
                         .requestMatchers(HttpMethod.GET, "/api/pots/public", "/api/pots/search").permitAll()
 
+                        // 웹소켓 연결을 위한 /ws-chat/** 경로는 모두 허용합니다.
+                        .requestMatchers("/ws-chat/**").permitAll()
+
                         //이미지 업로드 경로는 테스트를 위해 임시로 모두 허용
                         .requestMatchers("/api/images/upload").authenticated()
 
