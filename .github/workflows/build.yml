@@ -1,55 +1,60 @@
 # ===================================================================
-# GitHub Actions 워크플로우: Spring Boot 애플리케이션 빌드
+# GitHub Actions 워크플로우: Spring Boot 빌드 및 Docker 이미지 푸시
 # ===================================================================
-# 워크플로우의 이름을 지정합니다. GitHub 'Actions' 탭에 이 이름이 표시됩니다.
-name: Java CI with Gradle
+name: Java CI/CD with Gradle and Docker
 
-# 1. 워크플로우 트리거 (Trigger) 설정
-# 어떤 이벤트가 발생했을 때 이 워크플로우를 실행할지 정의합니다.
+# 1. 워크플로우 트리거 설정 (이전과 동일)
 on:
-  # 'master' 브랜치로 push 이벤트가 발생했을 때 실행됩니다.
   push:
     branches: [ "master" ]
-  # 'master' 브랜치로 Pull Request가 열리거나 업데이트될 때도 실행됩니다.
   pull_request:
     branches: [ "master" ]
 
-# 2. 워크플로우 권한 설정
-# 워크플로우가 실행될 때 가질 수 있는 권한을 지정합니다.
-# 지금은 컨텐츠를 읽을 수 있는 기본 권한만으로 충분합니다.
 permissions:
   contents: read
 
-# 3. 실행될 작업 (Job) 정의
-# 워크플로우는 하나 이상의 작업(Job)으로 구성됩니다.
+# 2. 실행될 작업(Job) 정의
 jobs:
-  # 'build'라는 이름의 작업을 정의합니다.
-  build:
-    # 이 작업이 실행될 가상 환경을 지정합니다. Ubuntu 최신 버전을 사용합니다.
+  build-and-push-image: # 작업 이름을 더 명확하게 변경
     runs-on: ubuntu-latest
 
-    # 4. 작업의 실행 단계 (Steps) 정의
-    # 실제 명령어가 실행되는 단계들입니다. 위에서부터 순서대로 실행됩니다.
+    # 3. 작업의 실행 단계 (Steps) 정의
     steps:
-      # 4-1. 소스 코드 체크아웃
-      # GitHub 저장소에 있는 코드를 가상 환경으로 가져옵니다.
+      # 3-1. 소스 코드 체크아웃 (이전과 동일)
       - uses: actions/checkout@v4
 
-      # 4-2. JDK 17 설치
-      # 프로젝트 빌드에 필요한 Java 17 환경을 설정합니다.
+      # 3-2. JDK 17 설치 (이전과 동일)
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # 4-3. Gradle 실행 권한 부여
-      # gradlew 파일에 실행 권한을 부여하여, 가상 환경에서 Gradle 명령을 사용할 수 있게 합니다.
+      # 3-3. Gradle 실행 권한 부여 (이전과 동일)
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # 4-4. Gradle로 프로젝트 빌드
-      # [핵심] '-x test' 옵션을 사용하여 테스트는 제외하고 빌드만 실행합니다.
-      # CI 환경에서는 실제 DB가 없으므로 테스트는 실패하기 때문입니다.
+      # 3-4. Gradle로 프로젝트 빌드 (이전과 동일)
       - name: Build with Gradle
         run: ./gradlew build -x test
+
+      # 💡 [CD 단계 추가] 3-5. Docker Hub에 로그인
+      # GitHub Secrets에 저장된 Docker Hub 사용자 이름과 토큰을 사용하여 로그인합니다.
+      # 이렇게 하면 실제 비밀번호가 코드에 노출되지 않아 안전합니다.
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 💡 [CD 단계 추가] 3-6. Docker 이미지 빌드 및 푸시
+      # 'docker/build-push-action'을 사용하여 Dockerfile로 이미지를 빌드하고,
+      # Docker Hub 저장소에 자동으로 푸시(업로드)합니다.
+      # 태그(tag)는 Docker Hub 사용자 이름과 프로젝트 이름으로 지정됩니다.
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/subdivision-prj:latest
+
