@@ -47,23 +47,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 2-1. 소스 코드에서 배포에 필요한 파일만 체크아웃합니다.
       - uses: actions/checkout@v4
 
-      # 2-1. .env 파일을 제외하고, 배포에 필요한 파일들만 .zip으로 압축합니다.
-      - name: Create deployment package
-        run: zip -r deploy.zip docker-compose.yml deploy.sh
-
-      # 2-2. 압축 파일을 EC2 서버로 안전하게 복사합니다.
-      - name: Copy deployment package to EC2
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "deploy.zip"
-          target: "/home/${{ secrets.EC2_USERNAME }}/subdivision"
-
-      # 2-3. EC2 서버에 접속하여 배포 스크립트를 실행합니다.
+      # 2-2. EC2 서버에 접속하여 배포 스크립트를 실행합니다.
       - name: Deploy on EC2 instance
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -74,16 +61,18 @@ jobs:
             # 작업 디렉토리를 생성하고 이동합니다. (-p 옵션은 디렉토리가 없으면 자동으로 생성해줍니다)
             mkdir -p /home/${{ secrets.EC2_USERNAME }}/subdivision
             cd /home/${{ secrets.EC2_USERNAME }}/subdivision
-            
-            # 압축을 해제합니다. (-o 옵션은 확인 없이 기존 파일을 덮어씁니다)
-            unzip -o deploy.zip
-            
-            # 배포 스크립트에 실행 권한을 부여합니다.
-            chmod +x deploy.sh
-            
+
             # 💡 [핵심] GitHub Secret에 저장된 ENV_PROD의 내용을 바탕으로 서버에 .env 파일을 직접 생성합니다.
             # 이 명령어를 통해, Git에 포함되지 않은 비밀 정보가 서버에 안전하게 전달됩니다.
             echo "${{ secrets.ENV_PROD }}" > .env
+
+            # docker-compose.yml과 deploy.sh를 Git 저장소에서 직접 다운로드하여 최신 상태를 유지합니다.
+            # 이 방식은 .zip으로 압축하여 보내는 것보다 더 안정적입니다.
+            curl -o docker-compose.yml https://raw.githubusercontent.com/${{ github.repository }}/master/docker-compose.yml
+            curl -o deploy.sh https://raw.githubusercontent.com/${{ github.repository }}/master/deploy.sh
+            
+            # 배포 스크립트에 실행 권한을 부여합니다.
+            chmod +x deploy.sh
             
             # Docker Hub 비밀번호를 환경 변수로 설정하여 deploy.sh 스크립트에서 사용할 수 있게 합니다.
             export DOCKER_PASSWORD=${{ secrets.DOCKERHUB_TOKEN }}
