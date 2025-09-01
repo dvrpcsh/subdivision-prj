@@ -54,9 +54,9 @@ jobs:
         run: zip -r deploy.zip docker-compose.yml .env deploy.sh
 
       # 2-2. [핵심] SSH Action의 기능을 활용하여 파일 복사와 스크립트 실행을 명확하게 분리합니다.
-      # 이 방식은 더 안정적이며, 복잡한 셸 스크립트 문제를 해결합니다.
       - name: Deploy to EC2 instance
-        uses: appleboy/ssh-action@v1.0.3
+        # 💡 [수정 1] ssh-action의 버전을 최신 버전(@master)으로 업데이트하여 source, target 기능을 사용합니다.
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
@@ -66,7 +66,11 @@ jobs:
 
           # 3. 파일 복사가 성공적으로 끝난 뒤, 원격 서버에서 아래 스크립트를 실행합니다.
           script: |
-            # 작업 디렉토리로 이동합니다.
+            # 💡 [수정 2] 서버에 필요한 패키지(unzip)가 설치되어 있도록 보장합니다.
+            sudo apt-get update
+            sudo apt-get install -y unzip
+            
+            # 💡 [수정 3] 작업 디렉토리로 이동합니다. -p 옵션은 디렉토리가 없으면 자동으로 생성해줍니다.
             cd /home/${{ secrets.EC2_USERNAME }}/subdivision
             
             # 압축을 해제합니다. (-o 옵션은 확인 없이 기존 파일을 덮어씁니다)
