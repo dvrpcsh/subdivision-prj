@@ -81,7 +81,7 @@ jobs:
             # 배포 스크립트에 실행 권한을 부여합니다.
             chmod +x deploy.sh
             
-            # Docker Hub 비밀번호를 환경 변수로 설정합니다.
+            # Docker Hub 비밀번호를 환경 변수로 설정하여 deploy.sh 스크립트에서 사용할 수 있게 합니다.
             export DOCKER_PASSWORD=${{ secrets.DOCKERHUB_TOKEN }}
             
             # 최종적으로 배포 스크립트를 실행합니다.
