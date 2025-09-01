@@ -1,0 +1,60 @@
+# ===================================================================
+# 운영 서버(Production) 전용 Docker Compose 파일
+# ===================================================================
+services:
+  app:
+    # 💡 [핵심] build: . 대신, CI/CD 파이프라인이 빌드하여 Docker Hub에 푸시한 이미지를 사용하도록 명시합니다.
+    # 이 이미지는 GitHub Secrets의 DOCKERHUB_USERNAME을 기반으로 동적으로 결정됩니다.
+    image: ${{ secrets.DOCKERHUB_USERNAME }}/subdivision-prj:latest
+    container_name: subdivision-app
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    # .env 파일은 deploy.sh 스크립트에서 --env-file 옵션으로 지정됩니다.
+
+  db:
+    image: mysql:8.0
+    container_name: subdivision-db
+    ports:
+      - "3306:3306"
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      # [보안] DB 관련 비밀 정보는 모두 .env 파일에서 주입됩니다.
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: nottori_db
+      MYSQL_USER: ${DB_USERNAME} # 운영 DB 사용자를 위해 추가 (선택사항)
+    volumes:
+      - db-data:/var/lib/mysql # 💡 데이터를 영속적으로 보관하기 위해 볼륨을 연결합니다.
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:latest
+    container_name: subdivision-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data # 💡 Redis 데이터를 영속적으로 보관하기 위해 볼륨을 연결합니다.
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+# 💡 서버가 재시작되어도 데이터가 사라지지 않도록 명명된 볼륨을 정의합니다.
+volumes:
+  db-data:
+  redis-data:

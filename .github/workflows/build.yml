@@ -47,19 +47,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 2-1. 소스 코드를 체크아웃합니다.
       - uses: actions/checkout@v4
 
-      # 💡 [핵심 수정 1] .env 파일을 GitHub Secret으로부터 직접 생성합니다.
-      # 이 단계는 GitHub Actions가 실행되는 가상 머신(ubuntu-latest) 내에서 일어납니다.
       - name: Create .env file
         run: echo "${{ secrets.ENV_PROD }}" > .env
 
-      # 2-2. 배포에 필요한 모든 파일을 .zip으로 압축합니다. 이제 .env 파일도 포함됩니다.
+      # 💡 [핵심 수정] 배포 패키지에 로컬용 docker-compose.yml 대신, 운영용 docker-compose.prod.yml을 포함합니다.
       - name: Create deployment package
-        run: zip -r deploy.zip docker-compose.yml .env deploy.sh
+        run: zip -r deploy.zip docker-compose.prod.yml .env deploy.sh
 
-      # 2-3. 압축 파일을 EC2 서버로 안전하게 복사합니다.
       - name: Copy deployment package to EC2
         uses: appleboy/scp-action@v0.1.4
         with:
@@ -69,7 +65,6 @@ jobs:
           source: "deploy.zip"
           target: "/home/${{ secrets.EC2_USERNAME }}/subdivision"
 
-      # 2-4. EC2 서버에 접속하여 배포 스크립트를 실행합니다.
       - name: Deploy on EC2 instance
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -77,19 +72,17 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # 작업 디렉토리를 생성하고 이동합니다.
             mkdir -p /home/${{ secrets.EC2_USERNAME }}/subdivision
             cd /home/${{ secrets.EC2_USERNAME }}/subdivision
             
-            # 압축을 해제합니다.
             unzip -o deploy.zip
             
-            # 배포 스크립트에 실행 권한을 부여합니다.
+            # 💡 [핵심 수정] 운영용 파일을 기본 docker-compose.yml 파일로 덮어씁니다.
+            mv docker-compose.prod.yml docker-compose.yml
+            
             chmod +x deploy.sh
             
-            # Docker Hub 비밀번호를 환경 변수로 설정합니다.
             export DOCKER_PASSWORD=${{ secrets.DOCKERHUB_TOKEN }}
             
-            # 최종적으로 배포 스크립트를 실행합니다.
             ./deploy.sh ${{ secrets.DOCKERHUB_USERNAME }} subdivision-prj ./.env
 
