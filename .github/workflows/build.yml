@@ -1,56 +1,43 @@
 # ===================================================================
-# GitHub Actions 워크플로우: Spring Boot 빌드 및 Docker 이미지 푸시
+# GitHub Actions 워크플로우: Spring Boot 빌드, Docker 이미지 푸시, EC2 서버 자동 배포
 # ===================================================================
 name: Java CI/CD with Gradle and Docker
 
-# 1. 워크플로우 트리거 설정 (이전과 동일)
 on:
   push:
     branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+  # pull_request는 빌드까지만 수행하므로, 배포는 master 브랜치에 push될 때만 실행되도록 분리합니다.
 
 permissions:
   contents: read
 
-# 2. 실행될 작업(Job) 정의
 jobs:
-  build-and-push-image: # 작업 이름을 더 명확하게 변경
+  # ===================================================================
+  # 1. 빌드 및 Docker 이미지 푸시 작업
+  # ===================================================================
+  build-and-push-image:
     runs-on: ubuntu-latest
-
-    # 3. 작업의 실행 단계 (Steps) 정의
     steps:
-      # 3-1. 소스 코드 체크아웃 (이전과 동일)
       - uses: actions/checkout@v4
 
-      # 3-2. JDK 17 설치 (이전과 동일)
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # 3-3. Gradle 실행 권한 부여 (이전과 동일)
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # 3-4. Gradle로 프로젝트 빌드 (이전과 동일)
       - name: Build with Gradle
         run: ./gradlew build -x test
 
-      # 💡 [CD 단계 추가] 3-5. Docker Hub에 로그인
-      # GitHub Secrets에 저장된 Docker Hub 사용자 이름과 토큰을 사용하여 로그인합니다.
-      # 이렇게 하면 실제 비밀번호가 코드에 노출되지 않아 안전합니다.
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 💡 [CD 단계 추가] 3-6. Docker 이미지 빌드 및 푸시
-      # 'docker/build-push-action'을 사용하여 Dockerfile로 이미지를 빌드하고,
-      # Docker Hub 저장소에 자동으로 푸시(업로드)합니다.
-      # 태그(tag)는 Docker Hub 사용자 이름과 프로젝트 이름으로 지정됩니다.
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -58,3 +45,48 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/subdivision-prj:latest
 
+  # ===================================================================
+  # 💡 [CD 단계 추가] 2. 원격 서버에 배포하는 작업
+  # ===================================================================
+  deploy:
+    # 'build-and-push-image' 작업이 성공해야만 이 작업을 시작합니다.
+    needs: build-and-push-image
+    runs-on: ubuntu-latest
+
+    steps:
+      # 2-1. 소스 코드 체크아웃
+      - uses: actions/checkout@v4
+
+      # 2-2. 원격 서버에 배포할 파일들을 .zip 파일로 압축
+      # docker-compose.yml과 .env, deploy.sh 스크립트를 압축하여 한 번에 전송합니다.
+      - name: Create deployment package
+        run: zip -r deploy.zip docker-compose.yml .env deploy.sh
+
+      # 2-3. SSH를 통해 원격 서버(EC2)에 접속하고 배포 실행
+      - name: Deploy to EC2 instance
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }} # EC2 인스턴스의 IP 또는 도메인
+          username: ${{ secrets.EC2_USERNAME }} # EC2 인스턴스 접속 사용자 이름 (예: ubuntu, ec2-user)
+          key: ${{ secrets.EC2_SSH_KEY }} # EC2 접속을 위한 SSH Private Key
+          script: |
+            # 1. 압축 파일을 서버로 전송
+            scp -o StrictHostKeyChecking=no deploy.zip ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USERNAME }}/subdivision
+            
+            # 2. 서버에 접속하여 배포 스크립트 실행
+            ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
+              # (1) 작업 디렉토리로 이동
+              cd /home/${{ secrets.EC2_USERNAME }}/subdivision
+            
+              # (2) 압축 해제 (기존 파일 덮어쓰기)
+              unzip -o deploy.zip
+            
+              # (3) 배포 스크립트에 실행 권한 부여
+              chmod +x deploy.sh
+            
+              # (4) Docker Hub 비밀번호를 환경 변수로 설정
+              export DOCKER_PASSWORD=${{ secrets.DOCKERHUB_TOKEN }}
+            
+              # (5) 배포 스크립트 실행
+              ./deploy.sh ${{ secrets.DOCKERHUB_USERNAME }} subdivision-prj ./ .env
+            EOF
