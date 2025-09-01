@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   # ===================================================================
-  # 1. 빌드 및 Docker 이미지 푸시 작업
+  # 1. 빌드 및 Docker 이미지 푸시 작업 (변경 없음)
   # ===================================================================
   build-and-push-image:
     runs-on: ubuntu-latest
@@ -45,6 +45,7 @@ jobs:
   deploy:
     needs: build-and-push-image
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -55,35 +56,34 @@ jobs:
         run: |
           sed -i 's|DOCKER_IMAGE_PLACEHOLDER|${{ secrets.DOCKERHUB_USERNAME }}/subdivision-prj:latest|g' docker-compose.prod.yml
 
-      - name: Create deployment package
-        run: zip -r deploy.zip docker-compose.prod.yml .env deploy.sh
-
-      - name: Copy deployment package to EC2
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "deploy.zip"
-          target: "/home/${{ secrets.EC2_USERNAME }}/subdivision"
-
-      - name: Deploy on EC2 instance
+      # 💡 [개선] scp와 ssh를 하나의 Action으로 통합하여 워크플로우를 간결하게 만듭니다.
+      - name: Deploy to EC2 instance
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            # 배포할 디렉토리를 생성하고 이동합니다.
             mkdir -p /home/${{ secrets.EC2_USERNAME }}/subdivision
             cd /home/${{ secrets.EC2_USERNAME }}/subdivision
             
-            unzip -o deploy.zip
+            # 💡 이 Action 내부에서 .env 파일을 직접 생성합니다.
+            echo "${{ secrets.ENV_PROD }}" > .env
             
-            mv docker-compose.prod.yml docker-compose.yml
+            # Git 저장소에서 최신 버전의 배포 파일들을 직접 다운로드합니다.
+            curl -o docker-compose.yml https://raw.githubusercontent.com/${{ github.repository }}/master/docker-compose.prod.yml
+            curl -o deploy.sh https://raw.githubusercontent.com/${{ github.repository }}/master/deploy.sh
+
+            # 다운로드 받은 파일의 이미지 플레이스홀더를 실제 값으로 교체합니다.
+            sed -i 's|DOCKER_IMAGE_PLACEHOLDER|${{ secrets.DOCKERHUB_USERNAME }}/subdivision-prj:latest|g' docker-compose.yml
             
+            # 배포 스크립트에 실행 권한을 부여합니다.
             chmod +x deploy.sh
             
+            # Docker Hub 비밀번호를 환경 변수로 설정합니다.
             export DOCKER_PASSWORD=${{ secrets.DOCKERHUB_TOKEN }}
             
+            # 최종적으로 배포 스크립트를 실행합니다.
             ./deploy.sh ${{ secrets.DOCKERHUB_USERNAME }} subdivision-prj ./.env
 
