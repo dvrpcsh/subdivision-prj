@@ -4,7 +4,7 @@
 services:
   app:
     # 💡 [핵심] GitHub Actions 워크플로우에서 이 부분을 실제 이미지 이름으로 교체할 것입니다.
-    image: DOCKER_IMAGE_PLACEHOLDER
+    image: snbcompany/subdivision-prj:latest
     container_name: subdivision-app
     restart: always
     depends_on:
@@ -29,6 +29,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: nottori_db
       MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - db-data:/var/lib/mysql
     healthcheck:
