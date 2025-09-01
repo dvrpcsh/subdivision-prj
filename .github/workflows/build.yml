@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   # ===================================================================
-  # 1. 빌드 및 Docker 이미지 푸시 작업 (변경 없음)
+  # 1. 빌드 및 Docker 이미지 푸시 작업
   # ===================================================================
   build-and-push-image:
     runs-on: ubuntu-latest
@@ -45,16 +45,13 @@ jobs:
   deploy:
     needs: build-and-push-image
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Create .env file
         run: echo "${{ secrets.ENV_PROD }}" > .env
 
-      # 💡 [핵심 수정 1] 배포 패키지를 만들기 전에, docker-compose.prod.yml 파일의 내용을 수정합니다.
       - name: Replace placeholder in docker-compose file
-        # 'sed' 명령어를 사용하여 DOCKER_IMAGE_PLACEHOLDER를 실제 이미지 이름으로 교체합니다.
         run: |
           sed -i 's|DOCKER_IMAGE_PLACEHOLDER|${{ secrets.DOCKERHUB_USERNAME }}/subdivision-prj:latest|g' docker-compose.prod.yml
 

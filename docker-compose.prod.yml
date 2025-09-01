@@ -3,7 +3,8 @@
 # ===================================================================
 services:
   app:
-    # 💡 [핵심] GitHub Actions 워크플로우에서 이 부분을 실제 이미지 이름으로 교체할 것입니다.
+    # 💡 [핵심] build 대신, CI/CD 파이프라인이 Docker Hub에 푸시한 이미지를 사용하도록 명시합니다.
+    # 이 부분은 GitHub Actions 워크플로우에서 실제 이미지 이름으로 교체될 것입니다.
     image: DOCKER_IMAGE_PLACEHOLDER
     container_name: subdivision-app
     restart: always
@@ -14,7 +15,6 @@ services:
         condition: service_healthy
     ports:
       - "8080:8080"
-    # .env 파일은 deploy.sh 스크립트에서 --env-file 옵션으로 지정됩니다.
 
   db:
     image: mysql:8.0
@@ -30,7 +30,7 @@ services:
       MYSQL_DATABASE: nottori_db
       MYSQL_USER: ${DB_USERNAME}
     volumes:
-      - db-data:/var/lib/mysql
+      - db-data:/var/lib/mysql # 💡 데이터를 영속적으로 보관하기 위해 볼륨을 연결합니다.
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
       interval: 10s
@@ -44,7 +44,7 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - redis-data:/data
+      - redis-data:/data # 💡 Redis 데이터를 영속적으로 보관하기 위해 볼륨을 연결합니다.
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -52,6 +52,7 @@ services:
       retries: 5
       start_period: 30s
 
+# 💡 서버가 재시작되어도 데이터가 사라지지 않도록 명명된 볼륨을 정의합니다.
 volumes:
   db-data:
   redis-data:
