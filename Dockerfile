@@ -5,10 +5,6 @@ FROM amazoncorretto:17-alpine-jdk
 # 2. 작업 디렉토리를 설정합니다.
 WORKDIR /app
 
-# 3. wait-for-it.sh 스크립트를 복사하고 실행 권한을 부여합니다. (선택사항이지만 권장)
-COPY wait-for-it.sh .
-RUN chmod +x wait-for-it.sh
-
 # 4. 빌드된 JAR 파일을 복사합니다.
 COPY build/libs/subdivision-prj-0.0.1-SNAPSHOT.jar app.jar
 
