@@ -1,6 +1,9 @@
+# ===================================================================
+# 운영 서버(Production) 전용 Docker Compose 파일 (최종 수정)
+# ===================================================================
 services:
   app:
-    build: .
+    image: dvrpcsh/subdivision-prj:latest # CI/CD를 통해 빌드된 실제 이미지 주소
     container_name: subdivision-app
     restart: always
     depends_on:
@@ -10,18 +13,10 @@ services:
         condition: service_healthy
     ports:
       - "8080:8080"
+    # [핵심] .env 파일의 모든 변수들을 이 컨테이너의 환경 변수로 설정합니다.
+    # 이것이 Spring Boot가 ${DB_USERNAME} 등을 실제 값으로 인식하게 만듭니다.
     env_file:
-      - .env
-    entrypoint: ["/bin/sh", "-c", "echo 'Waiting 15 seconds for services to be ready...' && sleep 15 && echo 'Starting application!' && java -Dspring.profiles.active=local -jar app.jar"]
-    environment:
-      - SPRING_PROFILES_ACTIVE=local
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/nottori_db?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=star15321!
-      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
-      - SPRING_REDIS_HOST=redis
-      - SPRING_REDIS_PORT=6379
+      - ./.env
 
   db:
     image: mysql:8.0
@@ -32,11 +27,17 @@ services:
       - --default-authentication-plugin=mysql_native_password
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
+    # [핵심] environment를 사용하여 .env 변수를 MySQL 컨테이너가 이해하는 이름으로 매핑합니다.
     environment:
-      - MYSQL_ROOT_PASSWORD=star15321!
-      - MYSQL_DATABASE=nottori_db
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: nottori_db
+      MYSQL_USER: ${DB_USERNAME}
+    volumes:
+      - db-data:/var/lib/mysql
+      # 컨테이너가 처음 생성될 때만 실행될 초기화 스크립트를 지정합니다.
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-pstar15321!"]
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -47,9 +48,17 @@ services:
     container_name: subdivision-redis
     ports:
       - "6379:6379"
+    volumes:
+      - redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+
+# 데이터의 영속성을 위해 명명된 볼륨을 정의합니다.
+volumes:
+  db-data:
+  redis-data:
+
