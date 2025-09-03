@@ -55,6 +55,7 @@ public class AuthService {
         redisTemplate.opsForValue().set(email, code, 5, TimeUnit.MINUTES);
 
         // 3. [환경 분기] emailService 객체가 주입되었는지 확인합니다.
+        log.info("emailSergice===="+emailService);
         if (emailService != null) {
             // 'prod' 환경: 실제 EmailService를 통해 이메일을 발송합니다.
             emailService.sendVerificationCode(email, code);

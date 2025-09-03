@@ -1,27 +1,31 @@
 package com.subdivision.subdivision_prj.config;
 
-import com.subdivision.subdivision_prj.config.JwtTokenProvider; // JwtTokenProvider 경로 확인
+import com.subdivision.subdivision_prj.config.JwtTokenProvider;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j; // Slf4j import 추가
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler; // 상속 클래스 변경
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.Map;
 
-@Slf4j // 로그 출력을 위해 추가
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
+
+    @Value("${oauth2.redirect.base-uri:https://www.dongne-gonggu.shop}")
+    private String redirectBaseUri;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -84,8 +88,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
             String jwt = jwtTokenProvider.createToken(email);
             log.info("JWT 생성 성공");
 
-            // 6. 리다이렉트 URL 구성
-            String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3000/oauth2/redirect")
+            // 6. 리다이렉트 URL 구성 - 환경 변수 사용
+            String targetUrl = UriComponentsBuilder.fromUriString(redirectBaseUri + "/oauth2/redirect")
                     .queryParam("token", jwt)
                     .build().toUriString();
 
@@ -106,7 +110,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     }
 
     private void handleAuthenticationFailure(HttpServletResponse response, String message) throws IOException {
-        String errorUrl = UriComponentsBuilder.fromUriString("http://localhost:3000/oauth2/redirect")
+        String errorUrl = UriComponentsBuilder.fromUriString(redirectBaseUri + "/oauth2/redirect")
                 .queryParam("error", message)
                 .build().toUriString();
 
