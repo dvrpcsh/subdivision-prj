@@ -1,5 +1,5 @@
 # ===================================================================
-# 운영 서버(Production) 전용 Docker Compose 파일 (최종 수정)
+# 운영 서버(Production) 전용 Docker Compose 파일 - AWS RDS 사용
 # ===================================================================
 services:
   app:
@@ -7,40 +7,12 @@ services:
     container_name: subdivision-app
     restart: always
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
     ports:
       - "8080:8080"
     env_file:
       - ./.env
-
-  db:
-    image: mysql:8.0
-    container_name: subdivision-db
-    ports:
-      - "3306:3306"
-    command:
-      - --default-authentication-plugin=mysql_native_password
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
-    # 💡 [핵심 수정 1] env_file 대신 environment를 사용하여 변수 이름을 명시적으로 매핑합니다.
-    # MySQL 컨테이너가 이해할 수 있도록, .env 파일의 DB_PASSWORD 값을 MYSQL_ROOT_PASSWORD 변수에 할당합니다.
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: nottori_db
-      MYSQL_USER: ${DB_USERNAME} # 이 변수는 MySQL 8.0 이미지에서 자동으로 사용자를 생성하지는 않지만, 명시적으로 두는 것이 좋습니다.
-    volumes:
-      - db-data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    healthcheck:
-      # 💡 [핵심 수정 2] healthcheck에서도 동일한 변수(DB_PASSWORD)를 사용하여 비밀번호 일관성을 유지합니다.
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
 
   redis:
     image: redis:latest
@@ -57,6 +29,4 @@ services:
       start_period: 30s
 
 volumes:
-  db-data:
   redis-data:
-
