@@ -14,10 +14,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Enumeration;
 
 /**
- * Spring Security의 필터 체인에서 가장 먼저 동작하여 모든 요청에 대해 JWT 토큰을 검증하는 커스텀 필터입니다.
- * @author subdivision
+ * Spring Security의 필터 체인에서 가장 먼저 동작하는 커스텀 JWT 인증 필터입니다.
+ * [최종 디버깅 버전] 문제 추적을 위해 상세한 로그를 추가했습니다.
  */
 @Slf4j
 @Component
@@ -26,49 +27,47 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
 
-    /**
-     * 모든 HTTP 요청이 컨트롤러에 도달하기 전에 이 메서드를 거칩니다.
-     * @param request  들어오는 HttpServletRequest
-     * @param response 나가는 HttpServletResponse
-     * @param filterChain 다음 필터를 호출하기 위한 FilterChain
-     */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        // 1. CORS Preflight 요청(OPTIONS)은 토큰 검증 없이 즉시 통과시킵니다.
-        // 이 로직이 없으면 프론트엔드에서 보내는 복잡한 요청(예: 이미지 업로드)이 CORS 정책에 의해 차단될 수 있습니다.
+        // ============================ [CCTV 로그 #1: 모든 요청 기록] ============================
+        // 이 필터를 거치는 모든 요청의 메서드와 URI를 로그로 출력합니다.
+        // 이미지 업로드 시 'OPTIONS /api/images/upload'와 'POST /api/images/upload'가 모두 보이는지 확인하기 위함입니다.
+        log.info(">>> [CCTV] JWT Filter 진입: Method = {}, URI = {}", request.getMethod(), request.getRequestURI());
+        // 요청에 포함된 모든 헤더를 출력하여 'Authorization' 헤더가 실제로 존재하는지 확인합니다.
+        Enumeration<String> headerNames = request.getHeaderNames();
+        if (headerNames != null) {
+            while (headerNames.hasMoreElements()) {
+                String headerName = headerNames.nextElement();
+                log.info(">>> [CCTV] Header: {} = {}", headerName, request.getHeader(headerName));
+            }
+        }
+        log.info(">>> [CCTV] =========================================================");
+        // =================================================================================
+
         if (HttpMethod.OPTIONS.matches(request.getMethod())) {
+            log.info(">>> [CCTV] OPTIONS 요청이므로 토큰 검증 없이 통과시킵니다.");
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 2. 요청 헤더에서 'Authorization' 헤더를 찾아 JWT 토큰을 추출합니다.
         String token = resolveToken(request);
 
         try {
-            // 3. 토큰이 존재하고 유효한 경우에만 인증 절차를 진행합니다.
             if (token != null && jwtTokenProvider.validationToken(token)) {
-                // 토큰이 유효하면, 토큰에서 사용자 정보(Authentication 객체)를 가져옵니다.
                 Authentication authentication = jwtTokenProvider.getAuthentication(token);
-                // SecurityContextHolder에 인증 정보를 저장합니다.
-                // 이 과정을 통해, 이후의 보안 로직이나 컨트롤러에서 @AuthenticationPrincipal 등으로 현재 로그인한 사용자 정보에 접근할 수 있게 됩니다.
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.info(">>> [CCTV] 인증 성공! Security Context에 '{}' 인증 정보를 저장했습니다.", authentication.getName());
+            } else {
+                log.warn(">>> [CCTV] 토큰이 없거나 유효하지 않습니다. 인증을 설정하지 않고 다음 필터로 넘어갑니다.");
             }
         } catch (Exception e) {
-            // 토큰 유효성 검증 과정에서 예외가 발생하더라도 요청을 중단시키지 않고, 로그만 남깁니다.
-            // 인증 정보가 설정되지 않았으므로, 해당 요청은 '인증되지 않은' 요청으로 처리됩니다.
-            log.error("사용자 인증 정보를 설정할 수 없습니다: {}", e.getMessage());
+            log.error(">>> [CCTV] 사용자 인증 설정 중 예외 발생: {}", e.getMessage());
         }
 
-        // 4. 모든 처리가 끝나면, 다음 필터로 요청과 응답을 전달합니다.
         filterChain.doFilter(request, response);
     }
 
-    /**
-     * HttpServletRequest의 'Authorization' 헤더에서 'Bearer ' 접두사를 제거하고 순수한 토큰 문자열만 추출하는 헬퍼 메서드입니다.
-     * @param request HttpServletRequest 객체
-     * @return 추출된 토큰 문자열, 또는 토큰이 없거나 형식이 올바르지 않으면 null을 반환합니다.
-     */
     private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
