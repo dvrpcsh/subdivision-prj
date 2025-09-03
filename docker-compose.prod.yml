@@ -1,10 +1,10 @@
 # ===================================================================
-# 운영 서버(Production) 전용 Docker Compose 파일
+# 운영 서버(Production) 전용 Docker Compose 파일 (최종 수정)
 # ===================================================================
 services:
   app:
-    # 💡 [핵심] GitHub Actions 워크플로우에서 이 부분을 실제 이미지 이름으로 교체할 것입니다.
-    image: snbcompany/subdivision-prj:latest
+    # 💡 [참고] 이 부분은 GitHub Actions가 실제 이미지 이름으로 교체해줍니다.
+    image: DOCKER_IMAGE_PLACEHOLDER
     container_name: subdivision-app
     restart: always
     depends_on:
@@ -14,7 +14,11 @@ services:
         condition: service_healthy
     ports:
       - "8080:8080"
-    # .env 파일은 deploy.sh 스크립트에서 --env-file 옵션으로 지정됩니다.
+    # 💡 [핵심 수정] env_file 지시어를 추가하여 .env 파일의 모든 변수들을
+    # 이 컨테이너의 환경 변수로 설정합니다.
+    # 이제 Spring Boot가 ${DB_USERNAME}을 'admin'으로 올바르게 인식할 것입니다.
+    env_file:
+      - ./.env
 
   db:
     image: mysql:8.0
@@ -25,11 +29,10 @@ services:
       - --default-authentication-plugin=mysql_native_password
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: nottori_db
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+    # 💡 일관성을 위해 db 서비스에도 env_file을 명시적으로 추가합니다.
+    # 이제 MYSQL_ROOT_PASSWORD, MYSQL_USER 등도 .env 파일에서 값을 가져옵니다.
+    env_file:
+      - ./.env
     volumes:
       - db-data:/var/lib/mysql
     healthcheck:
