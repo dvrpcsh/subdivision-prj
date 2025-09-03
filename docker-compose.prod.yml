@@ -25,14 +25,17 @@ services:
       - --default-authentication-plugin=mysql_native_password
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
-    env_file:
-      - ./.env
+    # 💡 [핵심 수정 1] env_file 대신 environment를 사용하여 변수 이름을 명시적으로 매핑합니다.
+    # MySQL 컨테이너가 이해할 수 있도록, .env 파일의 DB_PASSWORD 값을 MYSQL_ROOT_PASSWORD 변수에 할당합니다.
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: nottori_db
+      MYSQL_USER: ${DB_USERNAME} # 이 변수는 MySQL 8.0 이미지에서 자동으로 사용자를 생성하지는 않지만, 명시적으로 두는 것이 좋습니다.
     volumes:
       - db-data:/var/lib/mysql
-      # 💡 [핵심 수정] ./init.sql 파일을 컨테이너의 /docker-entrypoint-initdb.d/ 폴더로 복사합니다.
-      # 이 폴더 안의 .sql 파일은 MySQL 컨테이너가 처음 생성될 때 자동으로 실행됩니다.
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
+      # 💡 [핵심 수정 2] healthcheck에서도 동일한 변수(DB_PASSWORD)를 사용하여 비밀번호 일관성을 유지합니다.
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
       interval: 10s
       timeout: 5s
