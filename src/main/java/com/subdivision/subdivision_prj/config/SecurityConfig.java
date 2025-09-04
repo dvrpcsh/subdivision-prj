@@ -81,6 +81,9 @@ public class SecurityConfig {
                         // 이미지 업로드 경로는 인증된 사용자만 접근 가능하도록 설정합니다.
                         .requestMatchers("/api/images/upload").authenticated()
 
+                        // 헬스체크 경로를 인증없이 가능하도록 설정
+                        .requestMatchers("/api/auth/**", "/oauth2/**", "/health").permitAll()
+
                         // 위에서 명시적으로 허용한 경로 외의 모든 요청은 반드시 인증(로그인)을 거쳐야만 접근할 수 있습니다.
                         .anyRequest().authenticated()
                 )
