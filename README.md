@@ -1,79 +1,72 @@
+# 🛒 우리동네 공동구매 플랫폼 (Project: Dongne-Gonggu)
 
-🥕 우리 동네 소분 플랫폼 프로젝트
-1인 가구의 증가로 인해 발생하는 식료품 낭비를 줄이기 위한 지역 기반 공동구매 및 소분 플랫폼을 구축합니다.
+내 주변 이웃들과 함께 소분 상품을 공동구매하고 소통할 수 있는 위치 기반
+공동구매 플랫폼입니다.
 
-사용자는 동네 이웃들과 함께 대용량 상품을 구매하고, 필요한 만큼 나누어 가짐으로써 합리적인 소비를 할 수 있습니다.
+## ✨ 주요 기능 (Key Features)
 
-🚀 주요 기능 (Core Features)
-✅ 사용자 기능
-회원 관리: Spring Security를 활용한 회원가입, JWT 기반 로그인/로그아웃, 소셜 로그인.
+-   📍 **위치 기반 팟(Pod) 조회**: 사용자 현재 위치(위도/경도)를
+    기준으로 1km \~ 30km 반경 내에 생성된 공동구매(팟) 목록을 실시간으로
+    조회합니다.
+-   ✍️ **팟 생성 및 관리 (CRUD)**: 공동구매하고 싶은 상품에 대한 팟을
+    직접 생성하고, 참여 인원, 상품 정보 등을 자유롭게 수정 및 관리할 수
+    있습니다.
+-   🤝 **팟 참여 및 상태 관리**: 원하는 팟에 참여하거나 참여를 취소할 수
+    있으며, 모집 인원이 다 차면 '모집 완료' 상태로 자동 변경됩니다.
+-   💬 **실시간 채팅**: **WebSocket(STOMP)**을 기반으로 팟 참여자들끼리
+    실시간으로 소통할 수 있는 채팅 기능을 제공합니다. (입장/대화 메시지
+    분리 처리)
+-   🔍 **동적 검색 및 필터링**: JPA Specification을 활용하여
+    키워드(제목, 내용, 상품명), 카테고리, 모집 상태 등 다양한 조건으로
+    팟을 동적으로 검색할 수 있습니다.
+-   🔐 **안전한 인증 시스템**: JWT 토큰 기반의 자체 로그인/회원가입과
+    OAuth2 (Google, Kakao, Naver) 소셜 로그인을 모두 지원하여 사용자
+    편의성을 높였습니다.
+-   🖼️ **이미지 업로드**: AWS S3와 연동하여 팟 관련 이미지를 안정적으로
+    업로드하고, Presigned URL을 통해 안전하게 이미지를 조회합니다.
+-   📧 **이메일 인증**: 회원가입 시 이메일 인증을 통해 사용자의 신원을
+    확인하고 계정의 보안을 강화합니다.
 
-소분 그룹(팟) 생성 및 참여: 사고 싶은 물품에 대한 소분 그룹(팟)을 개설하고 이웃의 참여를 유도.
+## 🛠️ 기술 스택 (Tech Stack)
 
-지역 기반 검색: 내 위치를 기반으로 주변에서 진행 중인 소분 그룹을 실시간으로 검색.
+### Backend
 
-실시간 채팅: 그룹원들과 소분 장소, 시간 등을 조율하기 위한 실시간 채팅 기능.
+-   **Language**: Java 17
+-   **Framework**: Spring Boot 3.5.4
+-   **Data Access**: Spring Data JPA, Hibernate Spatial
+-   **Database**: MySQL (AWS RDS), Redis (Jedis Client)
+-   **Real-time**: Spring WebSocket, STOMP
+-   **Authentication**: Spring Security, JWT (jjwt), OAuth2
+-   **Cloud**: AWS S3, AWS EC2
+-   **Build Tool**: Gradle
 
-정산 관리: N빵 계산 및 송금 확인 등 정산 과정을 관리.
+### DevOps
 
-매너 온도: 거래 후 상대방에 대한 피드백을 통해 신뢰도 높은 커뮤니티 형성.
+-   **CI/CD**: GitHub Actions
+-   **Containerization**: Docker, Docker Compose
+-   **Infrastructure**: AWS EC2, AWS RDS
 
-✅ 비기능적 목표
-안정성: 동시 다수의 그룹 생성 및 참여 요청을 안정적으로 처리.
+## 🏗️ 시스템 아키텍처 (Architecture)
 
-성능: 위치 기반 검색 응답 시간 500ms 이내, 실시간 채팅 지연 최소화.
+간단한 아키텍처 다이어그램을 추가하면 프로젝트를 이해하는 데 큰 도움이
+됩니다.
 
-유지보수성: 명확한 코드 구조를 통해 기능 추가 및 수정이 용이하도록 설계.
+-   **사용자 (Client)**: 웹 브라우저를 통해 서비스에 접속합니다.
+-   **AWS EC2**: Spring Boot 애플리케이션이 Docker 컨테이너 형태로
+    실행되는 메인 서버입니다.
+-   **Spring Boot Application**: 비즈니스 로직, API 엔드포인트,
+    WebSocket 통신 등을 처리합니다.
+-   **AWS RDS (MySQL)**: 사용자, 팟, 채팅 메시지 등 핵심 데이터를
+    영구적으로 저장하는 데이터베이스입니다.
+-   **Redis**: 채팅 세션 정보, 캐시 데이터 등 휘발성이지만 빠른 접근이
+    필요한 데이터를 관리합니다.
+-   **AWS S3**: 사용자가 업로드하는 이미지를 저장하는 안정적인
+    스토리지입니다.
+-   **GitHub & Docker Hub**: master 브랜치에 코드 Push 시 GitHub
+    Actions가 자동으로 앱을 빌드하고, Docker 이미지를 생성하여 Docker
+    Hub에 푸시한 뒤, EC2에 배포하는 CI/CD 파이프라인이 구축되어
+    있습니다.
 
-🏛️ 시스템 아키텍처 (System Architecture)
-초기 단계에서는 빠른 개발과 배포, 용이한 관리를 위해 모놀리식 아키텍처(Monolithic Architecture) 로 프로젝트를 시작합니다. 서비스가 성장하고 기능이 고도화되면, 트래픽이 집중되는 특정 도메인(예: 채팅, 검색)부터 마이크로서비스로 점진적으로 분리하는 것을 고려할 수 있습니다.
+## 🌐 홈페이지
 
-🔧 아키텍처 다이어그램 (초기 모델)
-Plaintext
-
-[ 웹/앱 클라이언트 (React, Next.js) ]
-              ↑↓
-[ Spring Boot 기반 웹 애플리케이션 (Monolithic) ]
- │
- ├─ REST APIs (사용자, 상품, 그룹 등)
- ├─ WebSocket (실시간 채팅)
- │
- └─ 비즈니스 로직 (검색, 정산, 알림 등)
-              ↑↓
- ┌────────────────────────────────────┐
- │   데이터베이스 계층                │
- │ ┌────────────┐   ┌───────────────┐ │
- │ │ PostgreSQL │   │     Redis     │ │
- │ │ (핵심 데이터)│   │ (캐시, 세션)  │ │
- │ └────────────┘   └───────────────┘ │
- └────────────────────────────────────┘
-🧩 주요 컴포넌트 역할
-Spring Boot Application: 사용자 인증, 상품/그룹 관리, 채팅 등 모든 비즈니스 로직을 포함하는 핵심 서버입니다.
-
-PostgreSQL: 사용자 정보, 상품 정보, 그룹(팟) 정보, 거래 내역 등 정형화된 핵심 데이터를 영구적으로 저장합니다. (PostGIS 확장을 통한 위치 데이터 관리)
-
-Redis: 빠른 응답이 필요한 데이터(실시간 인기 검색어, 채팅 세션, 인증 토큰 등)를 캐싱하여 시스템 전반의 성능을 향상시킵니다.
-
-WebSocket: 그룹원 간의 실시간 채팅 기능을 위해 서버와 클라이언트 간의 양방향 통신 채널을 제공합니다.
-
-💻 기술 스택 (Technology Stack)
-Backend
-Language: Java 17
-
-Framework: Spring Boot 3.x
-
-API & Web: Spring Web, Spring WebSocket
-
-Database Access: Spring Data JPA
-
-Security: Spring Security, JWT
-
-Database
-RDBMS: PostgreSQL
-
-In-Memory DB: Redis
-
-DevOps
-Containerization: Docker
-
-Deployment: AWS / GCP / Naver Cloud Platform 등 클라우드 서비스 활용 예정
+[www.dongne-gonggu.shop](http://www.dongne-gonggu.shop)
